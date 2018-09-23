@@ -1,0 +1,17 @@
+/**
+ * Demultiplexor:
+ * {a, b} = {in, 0} if sel == 0
+ *          {0, in} if sel == 1
+ * 思路: out: a = And(in, Not(sel)), b = And(in, sel)
+ * and操作 用1 and 谁就返回谁 例如 1 and 1 = 1; 1 and 0 = 0;
+ */
+
+CHIP DMux {
+    IN in, sel;
+    OUT a, b;
+
+    PARTS:
+    Not(in = sel, out = n1);
+    And(a = in, b = n1, out = a);
+    And(a = in, b = sel, out = b);
+}

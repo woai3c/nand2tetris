@@ -1,0 +1,16 @@
+ /**
+ * Or gate:
+ * out = 1 if (a == 1 or b == 1)
+ *       0 otherwise
+ * 思路: Or = Nand(Not(a), Not(b))
+ */
+
+CHIP Or {
+    IN a, b;
+    OUT out;
+
+    PARTS:
+    Not(in = a, out = o1);
+    Not(in = b, out = o2);
+    Nand(a = o1, b = o2, out = out);
+}

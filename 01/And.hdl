@@ -1,0 +1,16 @@
+/**
+ * And gate: 
+ * out = 1 if (a == 1 and b == 1)
+ *       0 otherwise
+ * 思路: And = Nand(Nand(a, b), Nand(a, b))
+ */
+
+CHIP And {
+    IN a, b;
+    OUT out;
+
+    PARTS:
+    Nand(a = a, b = b, out = o1);
+    Nand(a = a, b = b, out = o2);
+    Nand(a = o1, b = o2, out = out);
+}
