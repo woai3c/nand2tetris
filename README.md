@@ -50,3 +50,5 @@ node codeGenerator.js Not 16 out in
     Not(in = in[14], out = out[14]);
     Not(in = in[15], out = out[15]);
 ```
+
+然后将代码复制到对应的HDL文件就可以了
