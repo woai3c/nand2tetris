@@ -1,6 +1,6 @@
 # 计算机系统要素-从零开始构建现代计算机-练习题答案
 ### [全套工具](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
-### [PDF](https://github.com/woai3c/The-Elements-of-Computer-Systems/blob/master/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E8%A6%81%E7%B4%A0%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%9E%84%E5%BB%BA%E7%8E%B0%E4%BB%A3%E8%AE%A1%E7%AE%97%E6%9C%BA.pdf)
+
 
 ### 简介
 >本书通过展现简单但功能强大的计算机系统之构建过程，为读者呈现了一幅完整、严格的计算机应用科学大图景。本书作者认为，理解计算机工作原理的最好方法就是亲自动手，从零开始构建计算机系统。
