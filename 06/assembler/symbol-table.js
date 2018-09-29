@@ -1,4 +1,5 @@
 const table = {}
+let binaryOut = ''
 let ramAddress 
 
 function constructor() {
@@ -39,4 +40,5 @@ export default {
     addEntry,
     contains,
     getAddress,
+    binaryOut,
 }

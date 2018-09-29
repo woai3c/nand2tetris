@@ -1,4 +1,5 @@
-import {addEntry, contains, getAddress, ramAddress} from './symbol-table.js'
+import {addEntry, contains, getAddress, ramAddress, binaryOut} from './symbol-table.js'
+import {dest, comp, jump} from './code.js'
 
 export default function parser(instructions) {
     advance(instructions)
@@ -12,25 +13,34 @@ function advance(instructions) {
     let current, type
     while (hasMoreCommands(instructions)) {
         current = instructions.shift().trim()
+
+        if (isInstructionInvalid(current)) {
+            continue
+        }
+
         type = commandType(current)
 
         switch (type) {
             case 'C':
-                dest(current)
-                comp(current)
-                jump(current)
+                let d = dest(current)
+                let c = comp(current)
+                let j = jump(current)
                 break
             case 'A':
             case 'L':
                 let token = symbol(current, type)
-
+                let binary
                 if (isNaN(parseInt(token))) {
-                    if (!contains(token)) {
+                    if (contains(token)) {
+                        binary = int2Binary(getAddress(token))
+                    } else {
+                        binary = int2Binary(ramAddress)
                         addEntry(token, ramAddress++)
                     }
                 } else {
-
+                    binary = int2Binary(token)
                 }
+                binaryOut += binary
                 break
         }
     }
@@ -63,4 +73,12 @@ function int2Binary(num) {
     }
 
     return str
+}
+
+function isInstructionInvalid(instruction) {
+    const reg = /^(\/\/)/
+    if (instruction == '' || reg.test(instruction)) {
+        return true
+    }
+    return false
 }
