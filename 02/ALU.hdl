@@ -58,9 +58,8 @@ CHIP ALU {
 
     // no
     Not16(in = o1, out = o2);
-    Mux16(a = o1, b = o2, sel = no, out = o3);
-    And16(a = o3, b = true, out = out);
-
+    Mux16(a = o1, b = o2, sel = no, out = out, out = o3);
+ 
     // zr
     Or16Way(in = o3, out = zr1);
     Not(in = zr1, out = zr);
