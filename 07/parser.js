@@ -67,7 +67,7 @@ let arg2Arry = ['push', 'pop', 'function', 'call']
 
 function arg2(command, type) {
     if (arg2Arry.includes(type)) {
-        
+        return command.split(' ').pop()
     }
 }
 
@@ -81,4 +81,8 @@ function isValidCommand(command) {
     return true
 }
 
-module.exports = parser
+module.exports = {
+    parser,
+    arg1,
+    arg2,
+}
