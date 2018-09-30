@@ -1,53 +1,81 @@
-import {addEntry, contains, getAddress, ramAddress, binaryOut} from './symbol-table.js'
-import {dest, comp, jump} from './code.js'
+const table = require('./symbol-table')
+const {addEntry, contains, getAddress} = table
+let {ramAddress} = table
+const code = require('./code')
+const {dest, comp, jump} = code
 
-export default function parser(instructions) {
-    advance(instructions)
+// 程序计数器 每遇到A或C指令+1
+let pc = -1
+
+function parser(instructions, isFirst) {
+    return advance(instructions, isFirst)
 }
 
 function hasMoreCommands(instructions) {
     return instructions.length > 0? true : false
 }
 
-function advance(instructions) {
-    let current, type
+// 匹配指令中的注释
+const reg3 = /(\/\/).+/
+function advance(instructions, isFirst) {
+    let current, type, binaryOut = ''
     while (hasMoreCommands(instructions)) {
         current = instructions.shift().trim()
 
         if (isInstructionInvalid(current)) {
             continue
         }
-
+        //  如果指令右边有注释 则删除
+        current = current.replace(reg3, '').trim()
         type = commandType(current)
 
+        // isFirst 首次解析不会解析指令 只会收集符号 格式:(xxx)
         switch (type) {
             case 'C':
-                let d = dest(current)
-                let c = comp(current)
-                let j = jump(current)
+                if (!isFirst) {
+                    let d = dest(current)
+                    let c = comp(current)
+                    let j = jump(current)
+                    binaryOut += '111' + c + d + j + '\r\n'
+                } else {
+                    pc++
+                }
+                
                 break
             case 'A':
-            case 'L':
-                let token = symbol(current, type)
-                let binary
-                if (isNaN(parseInt(token))) {
-                    if (contains(token)) {
-                        binary = int2Binary(getAddress(token))
+                if (!isFirst) {
+                    let token = symbol(current, type)
+                    let binary
+                    if (isNaN(parseInt(token))) {
+                        if (contains(token)) {
+                            binary = int2Binary(getAddress(token))
+                        } else {
+                            binary = int2Binary(ramAddress)
+                            addEntry(token, ramAddress++)
+                        }
                     } else {
-                        binary = int2Binary(ramAddress)
-                        addEntry(token, ramAddress++)
+                        binary = int2Binary(token)
                     }
+                    binaryOut += binary + '\r\n'
                 } else {
-                    binary = int2Binary(token)
+                    pc++
                 }
-                binaryOut += binary
+                
+                break
+            case 'L':
+                if (isFirst) {
+                    let token = symbol(current, type)
+                    addEntry(token, pc + 1)
+                }
                 break
         }
     }
-}
 
+    return binaryOut
+}
+// 返回指令类型
 function commandType(instruction) {
-    if (instruction.charAt(0) === '#') {
+    if (instruction.charAt(0) === '@') {
         return 'A'
     } else if (instruction.charAt(0) === '(') {
         return 'L'
@@ -55,18 +83,18 @@ function commandType(instruction) {
         return 'C'
     }
 }
-
+// 提取@xxx 或 (xxx) 中的xxx
+const reg1 = /^\((.+)\)$/
 function symbol(instruction, type) {
-    const reg = /^\((.+)\)$/
     if (type === 'A') {
         return instruction.substr(1)
     } else if (type === 'L') {
-        return instruction.replace(re, '$1')
+        return instruction.replace(reg1, '$1')
     }
 }
-
+// 将十进制数转为二进制指令
 function int2Binary(num) {
-    let str = num.toString(2)
+    let str = parseInt(num).toString(2)
 
     while (str.length !== 16) {
         str = '0' + str
@@ -74,11 +102,15 @@ function int2Binary(num) {
 
     return str
 }
-
+// 匹配以注释开关的句子
+const reg2 = /^(\/\/)/
+// 指令是否有效
 function isInstructionInvalid(instruction) {
-    const reg = /^(\/\/)/
-    if (instruction == '' || reg.test(instruction)) {
+    if (instruction == '' || reg2.test(instruction)) {
         return true
     }
+
     return false
 }
+
+module.exports = parser

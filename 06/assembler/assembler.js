@@ -1,14 +1,27 @@
-import {constructor, ramAddress, table} from './symbol-table.js'
-import parser from 'parser.js'
+const table = require('./symbol-table')
+const fs = require('fs')
+const parser = require('./parser')
 
-const fileName = process.argv[2]
+let fileName = process.argv[2]
 
-fs.readFile(fileName, (err, data) => {
+fs.readFile(fileName, 'utf-8', (err, data) => {
     if (err) {
         throw err
     }
-    data = data.split('/n')
-    // 初始化符号表
-    constructor()
-    parser(data)
+    // 每行指令
+    data = data.split('\r\n')
+
+    // 首次解析收集符号
+    parser([...data], true)
+
+    // 真正的解析指令
+    const binaryOut = parser(data)
+
+    fileName = fileName.split('.')[0]
+
+    fs.writeFile(fileName + '.hack', binaryOut, (err) => {
+        if (err) {
+            throw err
+        }
+    })
 })
