@@ -1,7 +1,3 @@
-const types = {
-
-}
-
 let command
 function parser(commands) {
     while (hasMoreCommands(commands)) {
