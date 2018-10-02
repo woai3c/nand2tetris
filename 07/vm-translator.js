@@ -1,33 +1,75 @@
 const fs = require('fs')
-const parser = require('./parser')
+const {parser} = require('./parser')
 
 const fileName = process.argv[2]
 const isDirectory = fs.lstatSync(fileName).isDirectory()
 
+let assembleOut = ''
+let outputFileName
+init()
+
 if (isDirectory) {
+    outputFileName = fileName
     fs.readdir(fileName, (err, files) => {
         if (err) {
             throw err
         }
 
         files.forEach(file => {
-            readFile(file, processFileData)
+            let tempArry = file.split('.')
+            tempArry.pop() 
+            let preName = tempArry.join('.')
+            let data = fs.readFileSync(file, 'utf-8')
+            processFileData(data, preName)
         })
+
+        setFileName()
     })
 } else {
-    readFile(fileName, processFileData)
+    let tempArry = fileName.split('.')
+    tempArry.pop() 
+    let preName = tempArry.join('.')
+    outputFileName = preName
+    let data = fs.readFileSync(fileName, 'utf-8')
+
+    processFileData(data, preName)
+
+    setFileName()
 }
 
 
-function readFile(file, callback) {
-    fs.readFile(file, 'utf-8', callback)
+function processFileData(data, preName) {
+    data = data.split('\r\n')
+    assembleOut += parser(data, preName)
 }
 
-function processFileData(err, data) {
-    if (err) {
-        throw err
-    }
+function init() {
+    assembleOut = '@256\r\n'
+                + 'D=A\r\n'
+                + '@SP\r\n' 
+                + 'M=D\r\n'
+                + '@300\r\n'
+                + 'D=A\r\n'
+                + '@LOCAL\r\n' 
+                + 'M=D\r\n'
+                + '@400\r\n'
+                + 'D=A\r\n'
+                + '@ARGUMENT\r\n' 
+                + 'M=D\r\n'
+                + '@3000\r\n'
+                + 'D=A\r\n'
+                + '@THIS\r\n' 
+                + 'M=D\r\n'
+                + '@3010\r\n'
+                + 'D=A\r\n'
+                + '@THAT\r\n' 
+                + 'M=D\r\n'
+}   
 
-    data = split('\r\n')
-    parser(data)
+function setFileName() {
+    fs.writeFile(outputFileName + '.asm', assembleOut, (err) => {
+        if (err) {
+            throw err
+        }
+    })
 }

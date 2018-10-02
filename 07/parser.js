@@ -1,31 +1,36 @@
-let command
-function parser(commands) {
+const {writeArithmetic, writePushPop} = require('./code-writer')
+
+function parser(commands, fileName) {
+    let output = ''
     while (hasMoreCommands(commands)) {
-        command = commands.shift().trim()
+        let command = commands.shift().trim()
         if (isValidCommand(command)) {
-            advance(command)
+            output += advance(command, fileName)
         }
     }
+
+    return output
 }
 
 // 匹配指令中的注释
 const reg1 = /(\/\/).+/
-let type
-function advance(command) {
+
+function advance(command, fileName) {
+    let output
     command = command.replace(reg1, '').trim()
-    type = commandType(command)
+    let type = commandType(command)
 
     switch (type) {
         case 'push':
-
-            break
         case 'pop':
-
+            output = writePushPop(command, type, fileName)
             break
         case 'arith':
-
+            output = writeArithmetic(command)
             break
     }
+
+    return output
 }
 
 function hasMoreCommands(commands) {
@@ -45,28 +50,6 @@ function commandType(command) {
     }
 }
 
-function arg1(command, type) {
-    if (type == 'arith') {
-        return command
-    } else {
-        const tempArry = command.split(' ').slice(1)
-        let arg = tempArry.shift()
-        while (temp === '') {
-            temp = tempArry.shift()
-        }
-
-        return arg
-    }
-}
-
-let arg2Arry = ['push', 'pop', 'function', 'call']
-
-function arg2(command, type) {
-    if (arg2Arry.includes(type)) {
-        return command.split(' ').pop()
-    }
-}
-
 // 匹配以注释开关的句子
 const reg2 = /^(\/\/)/
 
@@ -78,7 +61,5 @@ function isValidCommand(command) {
 }
 
 module.exports = {
-    parser,
-    arg1,
-    arg2,
+    parser
 }
