@@ -7,14 +7,12 @@ function writeArithmetic(command) {
         let output
 
         let output1 = '@SP\r\n'
-                    + 'M=M-1\r\n'
-                    + 'A=M\r\n'
+                    + 'AM=M-1\r\n'
                     + 'D=M\r\n'
                     + 'A=A-1\r\n'
 
         let output2 = '@SP\r\n'
-                    + 'M=M-1\r\n'
-                    + 'A=M\r\n'
+                    + 'AM=M-1\r\n'
 
         let output3 = '@SP\r\n'
                     + 'M=M+1\r\n'
@@ -82,16 +80,14 @@ function createJudgementString(judge) {
     // 先将两个数相减 再根据给出条件 大于 等于 小于 来处理
     // 因为判断大小需要用到跳转 所以得随机产生两个不同的symbol作标签
     let str = '@SP\r\n'
-            + 'M=M-1\r\n'
-            + 'A=M\r\n'
+            + 'AM=M-1\r\n'
             + 'D=M\r\n'
             + 'A=A-1\r\n'
             + 'D=M-D\r\n'
             + '@' + symbol1 + '\r\n' // 如果符合条件判断 则跳转到symbol1标记的地址
             + 'D;' + judge + '\r\n' // 否则接着往下处理
             + '@SP\r\n'
-            + 'M=M-1\r\n'
-            + 'A=M\r\n'
+            + 'AM=M-1\r\n'
             + 'M=0\r\n'
             + '@SP\r\n'
             + 'M=M+1\r\n'
@@ -99,8 +95,7 @@ function createJudgementString(judge) {
             + '0;JMP\r\n'
             + '(' + symbol1 + ')\r\n'
             + '@SP\r\n'
-            + 'M=M-1\r\n'
-            + 'A=M\r\n'
+            + 'AM=M-1\r\n'
             + 'M=-1\r\n'
             + '@SP\r\n'
             + 'M=M+1\r\n'
@@ -131,16 +126,55 @@ function processSegment(v1, v2, type, fileName) {
                         + 'M=M+1\r\n'
             } else {
                 output = '@SP\r\n'
-                        + 'M=M-1\r\n'
-                        + 'A=M\r\n'
+                        + 'AM=M-1\r\n'
                         + 'D=M\r\n'
                         + '@' + fileName + '.' + v2 + '\r\n'
                         + 'M=D\r\n'
             }
             break
-        default:
+        case 'POINTER':
+            if (v2 == 0) {
+                v1 = 'THIS'
+            } else if (v2 == 1) {
+                v1 = 'THAT'
+            }
+
             if (type == 'push') {
                 output = '@' + v1 + '\r\n'  
+                        + 'D=M\r\n'
+                        + '@SP\r\n'
+                        + 'A=M\r\n'
+                        + 'M=D\r\n'
+                        + '@SP\r\n'
+                        + 'M=M+1\r\n'
+            } else {
+                output = '@' + v1 + '\r\n'  
+                        + 'D=A\r\n'
+                        + '@R13\r\n'
+                        + 'M=D\r\n'
+                        + '@SP\r\n'
+                        + 'AM=M-1\r\n'
+                        + 'D=M\r\n'
+                        + '@R13\r\n'
+                        + 'A=M\r\n'
+                        + 'M=D\r\n'
+            }
+            break
+        default:
+            let str
+            if (v1 == 'LOCAL') {
+                str = '@LCL\r\n'  
+            } else if (v1 == 'ARGUMENT') {
+                str = '@ARG\r\n'  
+            } else if (v1 == 'TEMP') {
+                str = '@R5\r\n'
+                v2 = parseInt(v2) + 5
+            } else {
+                str = '@' + v1 + '\r\n'  
+            }
+            
+            if (type == 'push') {
+                output = str  
                         + 'D=M\r\n'
                         + '@' + v2 + '\r\n'
                         + 'A=D+A\r\n'
@@ -151,22 +185,16 @@ function processSegment(v1, v2, type, fileName) {
                         + '@SP\r\n'
                         + 'M=M+1\r\n'
             } else {
-                output = '@SP\r\n'
-                        + 'M=M-1\r\n'
-                        + 'A=M\r\n'
-                        + 'D=M\r\n'
-                        + '@R5\r\n'
-                        + 'M=D\r\n'
-                        + '@' + v1 + '\r\n'
+                output = str
                         + 'D=M\r\n'
                         + '@' + v2 + '\r\n'
-                        + 'A=D+A\r\n'
-                        + 'D=A\r\n'
-                        + '@R6\r\n'
+                        + 'D=D+A\r\n'
+                        + '@R13\r\n'
                         + 'M=D\r\n'
-                        + '@R5\r\n'
+                        + '@SP\r\n'
+                        + 'AM=M-1\r\n'
                         + 'D=M\r\n'
-                        + '@R6\r\n'
+                        + '@R13\r\n'
                         + 'A=M\r\n'
                         + 'M=D\r\n'
             }
