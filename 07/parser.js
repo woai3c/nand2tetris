@@ -3,7 +3,9 @@ const {writeArithmetic, writePushPop} = require('./code-writer')
 function parser(commands, fileName) {
     let output = ''
     while (hasMoreCommands(commands)) {
+        // 逐条弹出命令 再处理
         let command = commands.shift().trim()
+        // 如果命令有效
         if (isValidCommand(command)) {
             output += advance(command, fileName)
         }

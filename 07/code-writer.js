@@ -1,7 +1,7 @@
 // 存放生成的symbol
 const symbols = []
 
-const types = ['add', 'sub', 'neq', 'eq', 'gt', 'lt', 'and', 'or', 'not']
+const types = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
 function writeArithmetic(command) {
     if (types.includes(command)) {
         let output
@@ -26,7 +26,7 @@ function writeArithmetic(command) {
             case 'sub':
                 output = output1 + 'M=M-D\r\n'
                 break
-            case 'neq':
+            case 'neg':
                 output = output2 + 'M=-M\r\n' + output3
                 break
             case 'eq':
@@ -61,13 +61,12 @@ function writePushPop(command, type, fileName) {
 }
 
 function createRandomSymbol() {
-    let randomNumber = Math.ceil(Math.random()*26)
     let symbol
     let time = 10
     while (true) {
         symbol = ''
         while (time--) {
-            symbol += String.fromCharCode(64 + randomNumber)
+            symbol += String.fromCharCode(64 + Math.ceil(Math.random()*26))
         }
         if (!symbols.includes(symbol)) {
             symbols.push(symbol)
@@ -80,15 +79,16 @@ function createRandomSymbol() {
 function createJudgementString(judge) {
     let symbol1 = createRandomSymbol()
     let symbol2 = createRandomSymbol()
-
+    // 先将两个数相减 再根据给出条件 大于 等于 小于 来处理
+    // 因为判断大小需要用到跳转 所以得随机产生两个不同的symbol作标签
     let str = '@SP\r\n'
             + 'M=M-1\r\n'
             + 'A=M\r\n'
             + 'D=M\r\n'
             + 'A=A-1\r\n'
             + 'D=M-D\r\n'
-            + '@' + symbol1 + '\r\n'
-            + 'D;' + judge + '\r\n'
+            + '@' + symbol1 + '\r\n' // 如果符合条件判断 则跳转到symbol1标记的地址
+            + 'D;' + judge + '\r\n' // 否则接着往下处理
             + '@SP\r\n'
             + 'M=M-1\r\n'
             + 'A=M\r\n'
