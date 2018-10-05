@@ -45,13 +45,13 @@ function advance(command, fileName) {
             output = writeIf(command, type, fileName)
             break
         case 'return':
-
+            output = writeReturn(command)
             break
         case 'function':
-
+            output = writeFunction(command, type)
             break
         case 'call':
-
+            output = writeCall(command, type)
             break
         case 'arith':
             output = writeArithmetic(command)

@@ -17,12 +17,11 @@ if (isDirectory) {
         if (err) {
             throw err
         }
-        
+
         let index = files.indexOf('Sys.vm') 
 
         if (index > -1) {
-            files.splice(index, 1)
-            processFile('Sys.vm')
+            assembleOut += writeInit()
         }
 
         // 循环处理目录中的文件
