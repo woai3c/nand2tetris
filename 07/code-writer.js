@@ -144,43 +144,28 @@ function processSegment(v1, v2, type, fileName) {
                         + 'M=D\r\n'
             }
             break
+        case 'TEMP':
+            if (type == 'push') {
+                output = pushTemplate('@R5\r\n', v2, false)
+            } else {
+                output = popTemplate('@R5\r\n', v2, false)
+            }
+
+            break
         default:
             let str
             if (v1 == 'LOCAL') {
                 str = '@LCL\r\n'  
             } else if (v1 == 'ARGUMENT') {
                 str = '@ARG\r\n'  
-            } else if (v1 == 'TEMP') {
-                str = '@R5\r\n'
-                v2 = parseInt(v2) + 5
             } else {
                 str = '@' + v1 + '\r\n'  
             }
             
             if (type == 'push') {
-                output = str  
-                        + 'D=M\r\n'
-                        + '@' + v2 + '\r\n'
-                        + 'A=D+A\r\n'
-                        + 'D=M\r\n'
-                        + '@SP\r\n'
-                        + 'A=M\r\n'
-                        + 'M=D\r\n'
-                        + '@SP\r\n'
-                        + 'M=M+1\r\n'
+                output = pushTemplate(str, v2, true)
             } else {
-                output = str
-                        + 'D=M\r\n'
-                        + '@' + v2 + '\r\n'
-                        + 'D=D+A\r\n'
-                        + '@R13\r\n'
-                        + 'M=D\r\n'
-                        + '@SP\r\n'
-                        + 'AM=M-1\r\n'
-                        + 'D=M\r\n'
-                        + '@R13\r\n'
-                        + 'A=M\r\n'
-                        + 'M=D\r\n'
+                output = popTemplate(str, v2, true)
             }
     }
 
@@ -209,6 +194,41 @@ function arg2(command, type) {
         return command.split(' ').pop()
     }
 }
+
+function popTemplate(str, v2, flag) {
+    let str1 = flag? 'D=M\r\n' : 'D=A\r\n'
+    let output = str
+                + str1
+                + '@' + v2 + '\r\n'
+                + 'D=D+A\r\n'
+                + '@R13\r\n'
+                + 'M=D\r\n'
+                + '@SP\r\n'
+                + 'AM=M-1\r\n'
+                + 'D=M\r\n'
+                + '@R13\r\n'
+                + 'A=M\r\n'
+                + 'M=D\r\n'
+
+    return output
+}
+
+function pushTemplate(str, v2, flag) {
+    let str1 = flag? 'D=M\r\n' : 'D=A\r\n'
+    let output = str  
+                + str1
+                + '@' + v2 + '\r\n'
+                + 'A=D+A\r\n'
+                + 'D=M\r\n'
+                + '@SP\r\n'
+                + 'A=M\r\n'
+                + 'M=D\r\n'
+                + '@SP\r\n'
+                + 'M=M+1\r\n'
+
+    return output
+}
+
 module.exports = {
     writePushPop,
     writeArithmetic
