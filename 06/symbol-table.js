@@ -6,9 +6,6 @@ table.LCL = 1
 table.ARG = 2
 table.THIS = 3
 table.THAT = 4
-table.POINTER = 3
-// temp:r5-r12 
-table.TEMP = 5
 table.SCREEN = 16384
 table.KBD = 24576
 
