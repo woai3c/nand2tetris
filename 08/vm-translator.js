@@ -48,21 +48,6 @@ if (isDirectory) {
     setFileName()
 }
 
-// 处理文件
-function processFile(file, fileDirectory) {
-    let tempArry = file.split('.')
-    if (tempArry.pop() == 'vm') {
-        let preName = tempArry.join('.')
-        if (fileDirectory) {
-            let data = fs.readFileSync(`${fileDirectory}/${file}`, 'utf-8')
-            processFileData(data, preName)
-        } else {
-            let data = fs.readFileSync(file, 'utf-8')
-            processFileData(data, preName)
-        }
-    } 
-}
-
 // 处理文件数据
 function processFileData(data, preName) {
     data = data.split('\r\n')

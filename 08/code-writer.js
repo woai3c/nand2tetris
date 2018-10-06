@@ -12,55 +12,52 @@ function writeInit() {
     return output
 } 
 
-const types = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
 let index = 0
 function writeArithmetic(command) {
-    if (types.includes(command)) {
-        let output
+    let output
 
-        let output1 = '@SP\r\n'
-                    + 'AM=M-1\r\n'
-                    + 'D=M\r\n'
-                    + 'A=A-1\r\n'
+    let output1 = '@SP\r\n'
+                + 'AM=M-1\r\n'
+                + 'D=M\r\n'
+                + 'A=A-1\r\n'
 
-        let output2 = '@SP\r\n'
-                    + 'AM=M-1\r\n'
+    let output2 = '@SP\r\n'
+                + 'AM=M-1\r\n'
 
-        let output3 = '@SP\r\n'
-                    + 'M=M+1\r\n'
+    let output3 = '@SP\r\n'
+                + 'M=M+1\r\n'
 
-        switch (command) {
-            case 'add':
-                output = output1 + 'M=M+D\r\n'
-                break
-            case 'sub':
-                output = output1 + 'M=M-D\r\n'
-                break
-            case 'neg':
-                output = output2 + 'M=-M\r\n' + output3
-                break
-            case 'eq':
-                output = createJudgementString('JEQ', index++)
-                break
-            case 'gt':
-                output = createJudgementString('JGT', index++)
-                break
-            case 'lt':
-                output = createJudgementString('JLT', index++)
-                break
-            case 'and':
-                output = output1 + 'M=M&D\r\n'
-                break
-            case 'or':
-                output = output1 + 'M=M|D\r\n'
-                break
-            case 'not':
-                output = output2 + 'M=!M\r\n' + output3
-                break
-        }
-
-        return output
+    switch (command) {
+        case 'add':
+            output = output1 + 'M=M+D\r\n'
+            break
+        case 'sub':
+            output = output1 + 'M=M-D\r\n'
+            break
+        case 'neg':
+            output = output2 + 'M=-M\r\n' + output3
+            break
+        case 'eq':
+            output = createJudgementString('JEQ', index++)
+            break
+        case 'gt':
+            output = createJudgementString('JGT', index++)
+            break
+        case 'lt':
+            output = createJudgementString('JLT', index++)
+            break
+        case 'and':
+            output = output1 + 'M=M&D\r\n'
+            break
+        case 'or':
+            output = output1 + 'M=M|D\r\n'
+            break
+        case 'not':
+            output = output2 + 'M=!M\r\n' + output3
+            break
     }
+
+    return output
 }
 
 function writePushPop(command, type, fileName) {

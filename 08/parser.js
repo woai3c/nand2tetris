@@ -74,6 +74,7 @@ const reReturn = /^(return)/
 const reFunction = /^(function)/
 const reCall = /^(call)/
 
+const types = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
 function commandType(command) {
     if (rePush.test(command)) {
         return 'push'
@@ -91,7 +92,7 @@ function commandType(command) {
         return 'function'
     } else if (reCall.test(command)) {
         return 'call'
-    } else {
+    } else if (types.includes(command)) {
         return 'arith'
     }
 }
