@@ -13,7 +13,7 @@ popd
 ```
 jc test
 ```
-即可翻译成功
+即可编译成功
 
-PS:F:\nand2tetris\tools\JackCompiler.bat这个是你工具的路径
+PS: F:\nand2tetris\tools\JackCompiler.bat这个是你工具的路径
 
