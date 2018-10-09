@@ -1,0 +1,33 @@
+class Generate {
+    field String str;
+    static String str1;
+    constructor Generate new(String s) {
+        let str = s;
+        return this;
+    }
+
+    method String getString() {
+        return str;
+    }
+
+    function String func() {
+        let str1 = "func test";
+        return str1;
+    }
+
+    function String local() {
+        var String str2;
+        let str2 = "local test";
+        return str2;
+    }
+
+    function String newTest() {
+        var String newTest;
+        let newTest = Generate.oneMoreTime();
+        return newTest;
+    }
+
+    function String oneMoreTime() {
+        return "oneMoreTime";
+    }
+}

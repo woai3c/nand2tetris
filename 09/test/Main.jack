@@ -1,0 +1,22 @@
+class Main {
+    function void main() {
+        var Generate str;
+        var String mainStr;
+        let mainStr = Main.mainStr();
+        let str = Generate.new("this is a test");
+        do Output.printString(Generate.func());
+        do Output.println();
+        do Output.printString(str.getString());
+        do Output.println();
+        do Output.printString(Generate.local());
+        do Output.println();
+        do Output.printString(Generate.newTest());
+        do Output.println();
+        do Output.printString(mainStr);
+        return;
+    }
+
+    function String mainStr() {
+        return "good job!";
+    }
+}
