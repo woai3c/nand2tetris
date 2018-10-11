@@ -37,11 +37,9 @@ if (isDirectory) {
 
 // 处理文件数据
 function processFileData(data, path) {
-    data = data.split('\r\n')
-    const tokens = new JackTokenizer(data).getTokens()
-    console.log(tokens)
-    // createXMLFile(path)
-    // new CompilationEngine(tokens, xmlObj)
+    data = data.split(/\r\n|\n/)
+    const tokens = new JackTokenizer(data, path).getTokens()
+    new CompilationEngine(tokens, path)
 }  
 
 // 输出文件
@@ -51,8 +49,4 @@ function setFileName(name, data) {
             throw err
         }
     })
-}
-
-function createXMLFile(path) {
-    fs.writeFileSync(path + '.xml', '')
 }

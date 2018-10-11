@@ -1,12 +1,17 @@
-function JackTokenizer(data) {
+const fs = require('fs')
+
+function JackTokenizer(data, fileName) {
     this.data = data
-    this.tokens = []
-    //
+    this.rawData = data.slice()
+    this.tokens = []    
+    this.fileName = fileName + '.jack'
+    this.outputPath = fileName + 'T.xml'
+    // 单行注释
     this.notesRe1 = /^(\/\/)/
     /* */
-    this.notesRe2 = /^(\/\*)(\*\/)$/
+    this.notesRe2 = /^(\/\*).*(\*\/)$/
     /** */
-    this.notesRe3 = /^(\/\*\*)(\*\/)$/
+    this.notesRe3 = /^(\/\*\*).*(\*\/)$/
     // 匹配行中的注释
     this.re1 = /(\/\/).*/
     this.re2 = /(\/\*).*(\*\/)/
@@ -14,18 +19,22 @@ function JackTokenizer(data) {
     // 匹配多行注释
     this.reg1 = /^(\/\*)/
     this.reg2 = /^(\/\*\*)/
-    this.reg3 = /^\*/
-    this.reg4 = /(\*\/)$/
-    // 字母
-    this.wordRe = /[a-zA-Z]/
-    // 数字
-    this.numberRe = /\d/ 
+    this.reg3 = /^\*[^\/]/
+    this.reg4 = /^(\*\/)/
+
+    // 单个字符匹配
+    this.wordRe = /\w|_/
+
     // 标识符
-    this.identifierRe = /^[^\d].+/
+    this.identifierRe = /^[^\d].*/
+
     // 字符串常量
+    this.strRe = /^".*"$/
     this.strRe1 = /^"/
     this.strRe2 = /"$/
 
+    // 行数
+    this.line = 0
     this.keywordType = [
                         'class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean',
                         'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return'
@@ -38,8 +47,10 @@ function JackTokenizer(data) {
 JackTokenizer.prototype = {
     _init() {
         const data = this.data
+
         while (this._hasMoreTokens(data)) {
             let str = data.shift().trim()
+            this.line++
 
             if (this._isVaildStr(str)) {
                 // 清除字符串中的注释
@@ -49,6 +60,8 @@ JackTokenizer.prototype = {
                 this._lexicalAnalysis(str)
             }
         }
+
+        this.createXMLFile()
     },
 
     _hasMoreTokens(data) {
@@ -82,46 +95,51 @@ JackTokenizer.prototype = {
             return 'keyword'
         } else if (this.symbolType.includes(token)) {
             return 'symbol'
-        } else if (0 <= parseFloat(token) >= 32767) {
-            return 'int-const'
-        } else if (this.identifierRe.test(token)) {
-            return 'identifier'
         } else if (this.strRe.test(token)) {
             return 'string_const'
+        } else if (this.identifierRe.test(token)) {
+            return 'identifier'
+        } else if (0 <= parseFloat(token) <= 32767) {
+            return 'int-const'
         } else {
-            throw '无效token' + token
+            let error = 'line:' + this.line + ' syntax error:' + token + '\r\n' 
+                      + this.rawData[this.line - 1].trim() + '\r\nat ' + this.fileName
+            throw error
         }
     },
 
     _keyword(token) {
-        this.tokens.push({keyword: token})
+        this.tokens.push({keyword: token, line: this.line})
     },
 
     _symbol(token) {
-        this.tokens.push({symbol: token})
+        this.tokens.push({symbol: token, line: this.line})
     },
 
     _identifier(token) {
-        this.tokens.push({identifier: token})
+        this.tokens.push({identifier: token, line: this.line})
     },
 
     _intVal(token) {
-        this.tokens.push({integerConstant: token})
+        this.tokens.push({integerConstant: token, line: this.line})
     },
 
     _stringVal(token) {
         token = token.replace(this.strRe1, '')
         token = token.replace(this.strRe2, '')
 
-        this.tokens.push({stringConstant: token})
+        this.tokens.push({stringConstant: token, line: this.line})
     },
 
     _isVaildStr(str) {
         if (this.notesRe1.test(str) || this.notesRe2.test(str) || this.notesRe3.test(str)) {
             return false
         } else if (this.reg1.test(str) || this.reg2.test(str)) {
+ 
             while (this._hasMoreTokens(this.data)) {
+                this.line++
                 str = this.data.shift().trim()
+
                 if (this.reg3.test(str)) {
                     continue
                 } else if (this.reg4.test(str)) {
@@ -129,6 +147,8 @@ JackTokenizer.prototype = {
                 }
             }
 
+            return false
+        } else if (str === '') {
             return false
         }
 
@@ -139,33 +159,58 @@ JackTokenizer.prototype = {
         // c=a+b; 分割成 ['c', '=', 'a', '+', 'b', ';']
         const tokens = str.split('')
         let i = 0
-        let j
-        let len = tokens.length - 1
+        let len = tokens.length
         let token = ''
         let word 
 
         while (true) {
-            j = i
             word = tokens[i]
 
             if (this.wordRe.test(word)) {
                 token += word
                 i++
-            } else if (this.numberRe.test(word)) {
-                token += word
-                i++
             } else if (word === ' ') {
-                this._advance(token)
-                i++
-            } else if (this.symbolType.test(word)) {
-                this._advance(token)
-                this._advance(word)
-                token = ''
-                i++
+                if (token !== '') {
+                    this._advance(token)
+                    token = ''
+                    i++
+                } else {
+                    i++
+                }
+            } else if (this.symbolType.includes(word)) {
+                if (token !== '') {
+                    this._advance(token)
+                    this._advance(word)
+                    token = ''
+                    i++
+                } else {
+                    this._advance(word)
+                    i++
+                }
+                
+            } else if (word === '"') {
+                while (true) {
+                    token += word
+                    i++
+                    word = tokens[i]
+                    if (word === '"') {
+                        token += word
+                        this._advance(token)
+                        token = ''
+                        i++
+                        break
+                    }
+
+                    if (i >= len) {
+                        if (token !== '') {
+                            this._advance(token)
+                        }
+                        break
+                    }
+                }
             }
 
-
-            if (i == len) {
+            if (i >= len) {
                 if (token !== '') {
                     this._advance(token)
                 }
@@ -176,6 +221,30 @@ JackTokenizer.prototype = {
 
     getTokens() {
         return this.tokens
+    },
+
+    createXMLFile() {
+        let output = '<tokens>\r\n'
+        this.tokens.forEach(token => {
+            const key = Object.keys(token)[0]
+            const value = token[key]
+            switch (value) {
+                case '>':
+                    output += `<${key}> &gt; </${key}>\r\n`
+                    break
+                case '<':
+                    output += `<${key}> &lt; </${key}>\r\n`
+                    break
+
+                case '&':
+                    output += `<${key}> &amp; </${key}>\r\n`
+                    break
+                default:
+                    output += `<${key}> ${value} </${key}>\r\n`
+            }
+        })
+        output += '</tokens>'
+        fs.writeFileSync(this.outputPath, output)
     }
 }
 
