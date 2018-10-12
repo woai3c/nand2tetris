@@ -20,7 +20,7 @@ CompilationEngine.prototype = {
         key = temp[0]
         val = temp[1]
 
-        if (val === 'class') {
+        if (val == 'class') {
             this.output += '<class>'
             this.output += `<${key}> ${val} </${key}>`
 
@@ -28,14 +28,14 @@ CompilationEngine.prototype = {
             key = temp[0]
             val = temp[1]
 
-            if (key === 'identifier') {
+            if (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
-                if (val === '{') {
+                if (val == '{') {
                     this.output += `<${key}> ${val} </${key}>`
 
                     while (this.i < this.len) {
@@ -44,7 +44,7 @@ CompilationEngine.prototype = {
                         key = temp[0]
                         val = temp[1]
                         line = temp[2]
-                        console.log(key, val)
+
                         switch (val) {
                             case 'static':
                             case 'filed':
@@ -84,7 +84,7 @@ CompilationEngine.prototype = {
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
-        if (key === 'keyword' || key === 'identifier') {
+        if (key == 'keyword' || key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>`
 
             temp = this._getNextToken()
@@ -95,17 +95,17 @@ CompilationEngine.prototype = {
                 this._error(key, val, 'identifier')
             }
 
-            while (key === 'identifier') {
+            while (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
-                if (val === ';') {
+                if (val == ';') {
                     this.output += `<${key}> ${val} </${key}>`
                     break
-                } else if (val === ',') {
+                } else if (val == ',') {
                     this.output += `<${key}> ${val} </${key}>`
                     temp = this._getNextToken()
                     key = temp[0]
@@ -133,28 +133,28 @@ CompilationEngine.prototype = {
             this._error(key, val, 'identifier | keyword')
         }
 
-        while (key === 'identifier' || key === 'keyword') {
+        while (key == 'identifier' || key == 'keyword') {
             this.output += `<${key}> ${val} </${key}>`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
         }
 
-        if (val === '(') {
+        if (val == '(') {
             this.output += `<${key}> ${val} </${key}>`
             this._compileParameterList()
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
-            if (val === ')') {
+            if (val == ')') {
                 this.output += `<${key}> ${val} </${key}>`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
-                if (val === '{') {
+                if (val == '{') {
                     this._compileSubroutineBody(key, val)
                 } else {
                     this._error(key, val, '{')
@@ -179,40 +179,26 @@ CompilationEngine.prototype = {
         val = temp[1]
         line = temp[2]
 
-        switch (val) {
-            case 'if':
-                this._compileIf(key, val)
-                break
-            case 'while':
-                this._compileWhile(key, val)
-                break
-            case 'do':
-                this._compileDo(key, val)
-                break
-            case 'return':
-                this._compileReturn(key, val)
-                break
-            case 'let':
-                this._compileLet(key, val)
-                break
-            case 'var':
-                this._compileVarDec(key, val)
-                break
-            default:
-                let error = 'line:' + line + ' syntax error: {' + key + ': ' + val 
-                          + '} expect keyword if | while | do | return | let | var'
-                          + '\r\nat ' + this.fileName
-                throw error
+        if (val == 'var') {
+            this._compileVarDec(key, val)
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+            line = temp[2]
+            this._compileStatements(key, val, line)
+        } else {
+            this._compileStatements(key, val, line)
         }
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
-        if (val === '}') {
+        if (val == '}') {
             this.output += `<${key}> ${val} </${key}>`
         } else {
-            error(key, val, '}')
+            this._error(key, val, '}')
         }
         this.output += '</subroutineBody>'
     },
@@ -228,19 +214,19 @@ CompilationEngine.prototype = {
             if (key !== 'keyword') {
                 error(key, val, 'keyword')
             } else {
-                while (key === 'keyword') {
+                while (key == 'keyword') {
                     this.output += `<${key}> ${val} </${key}>`
 
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
-                    if (key === 'identifier') {
+                    if (key == 'identifier') {
                         this.output += `<${key}> ${val} </${key}>`
 
                         temp = this._getNextToken()
                         key = temp[0]
                         val = temp[1]
-                        if (val === ',') {
+                        if (val == ',') {
                             this.output += `<${key}> ${val} </${key}>`
                             temp = this._getNextToken()
                             key = temp[0]
@@ -265,7 +251,7 @@ CompilationEngine.prototype = {
         key = temp[0]
         val = temp[1]
 
-        if (key === 'keyword' || key === 'identifier') {
+        if (key == 'keyword' || key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>`
             temp = this._getNextToken()
             key = temp[0]
@@ -275,18 +261,18 @@ CompilationEngine.prototype = {
                 error(key, val, 'identifier')
             }
 
-            while (key === 'identifier') {
+            while (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>`
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
-                if (val === ',') {
+                if (val == ',') {
                    this.output += `<${key}> ${val} </${key}>`
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1] 
-                } else if (val === ';') {
+                } else if (val == ';') {
                     this.output += `<${key}> ${val} </${key}>`
                     break
                 } else {
@@ -298,26 +284,210 @@ CompilationEngine.prototype = {
         }
 
         this.output += '</VarDec>'
+
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1]
+
+        if (val == 'var') {
+            this._compileVarDec(key, val)
+        } else {
+            this.i--
+        }
     },
 
-    _compileStatements() {
+    _compileStatements(key, val, line) {
+        let temp
+        this.output += '<statements>'
 
+        while (val !== '}') {
+            switch (val) {
+                case 'if':
+                    this._compileIf(key, val)
+                    break
+                case 'while':
+                    this._compileWhile(key, val)
+                    break
+                case 'do':
+                    this._compileDo(key, val)
+                    break
+                case 'return':
+                    this._compileReturn(key, val)
+                    break
+                case 'let':
+                    this._compileLet(key, val)
+                    break
+                default:
+                    let error = 'line:' + line + ' syntax error: {' + key + ': ' + val 
+                              + '} expect statement if | while | do | return | let'
+                              + '\r\nat ' + this.fileName
+                    throw error
+            }
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1] 
+            line = temp[2]
+
+        }
+        this.i--
+        this.output += '</statements>'
     },
 
     _compileDo() {
 
     },
 
-    _compileLet() {
+    _compileLet(key, val) {
+        let temp
+        this.output += '<letStatement>'
+        this.output += `<${key}> ${val} </${key}>`
 
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1] 
+
+        if (key == 'identifier') {
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == '[') {
+                this._compileExpression()
+                temp = this._getNextToken()
+                key = temp[0]
+                val = temp[1]
+
+                if (val == ']') {
+                    temp = this._getNextToken()
+                    key = temp[0]
+                    val = temp[1]
+
+                    if (val == '=') {
+                        this._compileExpression()
+                    } else {
+                        this._error(key, val, '=')
+                    }
+                } else {
+                    this._error(key, val, ']')
+                }
+            } else if (val == '=') {
+                this._compileExpression()
+            } else {
+                this._error(key, val, '[ | =')
+            }
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == ';') {
+                this.output += `<${key}> ${val} </${key}>`
+            } else {
+                this._error(key, val, ';')
+            }
+        } else {
+            this._error(key, val, 'identifier')
+        }
+        this.output += '</letStatement>'
     },
 
     _compileWhile() {
 
     },
 
-    _compileIf() {
+    _compileIf(key, val) {
+        let temp
+        this.output += '<ifStatement>'
+        this.output += `<${key}> ${val} </${key}>`
 
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1] 
+
+        if (val == '(') {
+            this._compileExpression()
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == ')') {
+                this.output += `<${key}> ${val} </${key}>`
+
+                temp = this._getNextToken()
+                key = temp[0]
+                val = temp[1]
+
+                if (val == '{') {
+                    this.output += `<${key}> ${val} </${key}>`
+                    temp = this._getNextToken()
+                    let line
+                    key = temp[0]
+                    val = temp[1] 
+                    line = temp[2]
+
+                    this._compileStatements(key, val, line)
+
+                    temp = this._getNextToken()
+                    key = temp[0]
+                    val = temp[1] 
+
+                    if (val == '}') {
+                        this.output += `<${key}> ${val} </${key}>`
+
+                        temp = this._getNextToken()
+                        key = temp[0]
+                        val = temp[1] 
+
+                        if (val == 'else') {
+                            this._compileElse(key, val)
+                        } else {
+                            this.i--
+                        }
+                    } else {
+                        this._error(key, val, '}')
+                    }
+                } else {
+                    this._error(key, val, ')')
+                }
+            } else {
+                this._error(key, val, ')')
+            }
+        } else {
+            this._error(key, val, '(')
+        }
+
+        this.output += '</ifStatement>'
+    },  
+
+    _compileElse(key, val) {
+        let temp, line
+        this.output += `<${key}> ${val} </${key}>`
+
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1]
+
+        if (val == '{') {
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+            line = temp[2]
+            this._compileStatements(key, val, line)
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == '}') {
+                this.output += `<${key}> ${val} </${key}>`
+            } else {
+                this._error(key, val, '{')
+            }
+        } else {
+            this._error(key, val, '{')
+        }
     },
 
     _compileReturn() {
@@ -325,11 +495,47 @@ CompilationEngine.prototype = {
     },
 
     _compileExpression() {
+        this.output += '<expression>'
+        let key, val, temp
 
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1] 
+
+        while (true) {
+            if (key == 'identifier') {
+                this._compileTerm(key, val)
+            } else {
+                switch (val) {
+                    case 'true':
+                    case 'false':
+                    case 'null':
+                    case 'this':
+                    case '-':
+                    case '~':
+                        this._compileTerm(key, val)
+                        break
+                    default:
+                        this.output += `<${key}> ${val} </${key}>`
+                }
+            }
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == ')' || val == ';' || val == ']') {
+                this.i--
+                break
+            }
+        } 
+        this.output += '</expression>'
     },
 
-    _compileTerm() {
-
+    _compileTerm(key, val) {
+        this.output += '<term>'
+        this.output += `<${key}> ${val} </${key}>`
+        this.output += '</term>'
     },
 
     _compileExpressionList() {
