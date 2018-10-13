@@ -2,10 +2,11 @@ const fs = require('fs')
 
 function CompilationEngine(tokens, fileName) {
     this.outputPath = fileName + '.xml'
-    this.fileName = fileName + '.jack'
+    this.rawFile = fileName + '.jack'
     this.tokens = tokens
     this.len = tokens.length
     this.output = ''
+    this.op = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
     // index
     this.i = -1
     this._compileClass()
@@ -58,7 +59,7 @@ CompilationEngine.prototype = {
                             default:
                                 let error = 'line:' + line + ' syntax error: {' + key + ': ' + val 
                                           + '} expect keyword static | field | constructor | function | method'
-                                          + '\r\nat ' + this.fileName
+                                          + '\r\nat ' + this.rawFile
                                 throw error
                         }
                     }
@@ -320,7 +321,7 @@ CompilationEngine.prototype = {
                 default:
                     let error = 'line:' + line + ' syntax error: {' + key + ': ' + val 
                               + '} expect statement if | while | do | return | let'
-                              + '\r\nat ' + this.fileName
+                              + '\r\nat ' + this.rawFile
                     throw error
             }
 
@@ -348,6 +349,8 @@ CompilationEngine.prototype = {
         val = temp[1] 
 
         if (key == 'identifier') {
+            this.output += `<${key}> ${val} </${key}>`
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
@@ -406,6 +409,7 @@ CompilationEngine.prototype = {
         val = temp[1] 
 
         if (val == '(') {
+            this.output += `<${key}> ${val} </${key}>`
             this._compileExpression()
 
             temp = this._getNextToken()
@@ -496,14 +500,21 @@ CompilationEngine.prototype = {
 
     _compileExpression() {
         this.output += '<expression>'
-        let key, val, temp
+        let key, val, temp, line
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1] 
+        line = temp[2]
+
+        if (val == ',') {
+            let error = 'line:' + line + ' The expression should not begin with a ,'
+                      + '\r\nat ' + this.rawFile
+            throw error
+        }
 
         while (true) {
-            if (key == 'identifier') {
+            if (key == 'identifier' || key == 'integerConstant' || key == 'stringConstant') {
                 this._compileTerm(key, val)
             } else {
                 switch (val) {
@@ -524,22 +535,107 @@ CompilationEngine.prototype = {
             key = temp[0]
             val = temp[1]
 
-            if (val == ')' || val == ';' || val == ']') {
+            if (val == ')' || val == ';' || val == ']' || val == ',') {
                 this.i--
                 break
             }
-        } 
+        }
+
         this.output += '</expression>'
     },
 
     _compileTerm(key, val) {
+        let temp
         this.output += '<term>'
         this.output += `<${key}> ${val} </${key}>`
+
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1]
+
+        if (val == ';' || this.op.includes(val)) {
+            this.i--
+        } else if (val == '(') {
+            this.output += `<${key}> ${val} </${key}>`
+            this._compileExpressionList()
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == ')') {
+                this.output += `<${key}> ${val} </${key}>`
+            } else {
+                this._error(key, val, ')')
+            }
+        } else if (val == '[') {
+            this.output += `<${key}> ${val} </${key}>`
+            this._compileExpression()
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+            
+            if (val == ']') {                       
+                this.output += `<${key}> ${val} </${key}>`
+            } else {
+                this._error(key, val, ']')
+            }
+        } else if (val == '.') {
+            this.output += `<${key}> ${val} </${key}>`
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (key == 'identifier') {
+                temp = this._getNextToken()
+                key = temp[0]
+                val = temp[1]
+                if (val == '(') {
+                    this._compileExpressionList()
+                    temp = this._getNextToken()
+                    key = temp[0]
+                    val = temp[1]
+
+                    if (val == ')') {
+                        this.output += `<${key}> ${val} </${key}>`
+                    } else {
+                        this._error(key, val, ')')
+                    }
+                } else {
+                    this.error(key, val, '(')
+                }
+            } else {
+                this.error(key, val, 'identifier')
+            }
+        } else {
+            this.i--
+        }
+
         this.output += '</term>'
     },
 
     _compileExpressionList() {
+        let key, val, temp
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1]
 
+        this.output += '<expressionList>'
+
+        while (true) {
+            this._compileExpression()
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+
+            if (val == ',') {
+                this.output += `<${key}> ${val} </${key}>`
+            } else if (val == ')') {
+                this.i--
+                break
+            }
+        }
+
+        this.output += '</expressionList>'
     },
 
     createXMLFile() {
@@ -557,7 +653,7 @@ CompilationEngine.prototype = {
 
     _error(key, val, type) {
         let error = 'line:' + this.tokens[this.i].line + ' syntax error: {' + key + ': ' + val 
-                  + '}\r\nExpect the type of key to be ' + type + '\r\nat ' + this.fileName
+                  + '}\r\nExpect the type of key to be ' + type + '\r\nat ' + this.rawFile
         throw error
     }
 }

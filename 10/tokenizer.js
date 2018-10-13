@@ -4,7 +4,7 @@ function JackTokenizer(data, fileName) {
     this.data = data
     this.rawData = data.slice()
     this.tokens = []    
-    this.fileName = fileName + '.jack'
+    this.rawFile = fileName + '.jack'
     this.outputPath = fileName + 'T.xml'
     // 单行注释
     this.notesRe1 = /^(\/\/)/
@@ -103,7 +103,7 @@ JackTokenizer.prototype = {
             return 'int-const'
         } else {
             let error = 'line:' + this.line + ' syntax error:' + token + '\r\n' 
-                      + this.rawData[this.line - 1].trim() + '\r\nat ' + this.fileName
+                      + this.rawData[this.line - 1].trim() + '\r\nat ' + this.rawFile
             throw error
         }
     },
