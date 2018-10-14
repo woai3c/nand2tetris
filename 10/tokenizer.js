@@ -39,7 +39,10 @@ function JackTokenizer(data, fileName) {
                         'class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean',
                         'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return'
                     ]
-    this.symbolType = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~']
+    this.symbolType = [
+                        '{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~',
+                        '&lt;', '&gt;', '&amp;'
+                    ]
 
     this._init()
 }
@@ -178,6 +181,18 @@ JackTokenizer.prototype = {
                     i++
                 }
             } else if (this.symbolType.includes(word)) {
+                switch (word) {
+                    case '>':
+                        word = '&gt;'
+                        break
+                    case '<':
+                        word = '&lt;'
+                        break
+                    case '&':
+                        word = '&amp;'
+                        break
+                }
+
                 if (token !== '') {
                     this._advance(token)
                     this._advance(word)
@@ -228,20 +243,7 @@ JackTokenizer.prototype = {
         this.tokens.forEach(token => {
             const key = Object.keys(token)[0]
             const value = token[key]
-            switch (value) {
-                case '>':
-                    output += `<${key}> &gt; </${key}>\r\n`
-                    break
-                case '<':
-                    output += `<${key}> &lt; </${key}>\r\n`
-                    break
-
-                case '&':
-                    output += `<${key}> &amp; </${key}>\r\n`
-                    break
-                default:
-                    output += `<${key}> ${value} </${key}>\r\n`
-            }
+            output += `<${key}> ${value} </${key}>\r\n`
         })
         output += '</tokens>'
         fs.writeFileSync(this.outputPath, output)
