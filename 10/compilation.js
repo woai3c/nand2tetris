@@ -15,29 +15,28 @@ CompilationEngine.prototype = {
     _compileClass() {
         const tokens = this.tokens
         let key, val, temp
-        // 缩进
-        let indent = this._createSpace(2)
+        
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (val == 'class') {
             this.output += '<class>\r\n'
-            this.output += indent + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (key == 'identifier') {
-                this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == '{') {
-                    this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
 
                     while (this.i < this.len) {
                         let line
@@ -47,19 +46,19 @@ CompilationEngine.prototype = {
                         line = temp[2]
 
                         if (val == '}') {
-                            this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                            this.output += `<${key}> ${val} </${key}>\r\n`
                             break
                         }
 
                         switch (val) {
                             case 'static':
                             case 'field':
-                                this._compileClassVarDec(key, val, indent)
+                                this._compileClassVarDec(key, val)
                                 break
                             case 'constructor':
                             case 'function':
                             case 'method':
-                                this._compileSubroutine(key, val, indent)
+                                this._compileSubroutine(key, val)
                                 break
                             default:
                                 this._error(key, val, 'static | field | constructor | function | method')
@@ -79,17 +78,17 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compileClassVarDec(key, val, indent) {
+    _compileClassVarDec(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<classVarDec>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<classVarDec>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
         if (key == 'keyword' || key == 'identifier') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
 
             temp = this._getNextToken()
             key = temp[0]
@@ -100,17 +99,17 @@ CompilationEngine.prototype = {
             }
 
             while (key == 'identifier') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == ';') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                     break
                 } else if (val == ',') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
@@ -122,14 +121,14 @@ CompilationEngine.prototype = {
             this._error(key, val, 'keyword')
         }
 
-        this.output += indent + '</classVarDec>\r\n'
+        this.output += '</classVarDec>\r\n'
     },
 
-    _compileSubroutine(key, val, indent) {
+    _compileSubroutine(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<subroutineDec>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<subroutineDec>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
@@ -139,28 +138,28 @@ CompilationEngine.prototype = {
         }
 
         while (key == 'identifier' || key == 'keyword') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
         }
 
         if (val == '(') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-            this._compileParameterList(indent2)
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            this._compileParameterList()
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
             if (val == ')') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == '{') {
-                    this._compileSubroutineBody(key, val, indent2)
+                    this._compileSubroutineBody(key, val)
                 } else {
                     this._error(key, val, '{')
                 }
@@ -171,14 +170,14 @@ CompilationEngine.prototype = {
             this._error(key, val, '(')
         }
 
-        this.output += indent + '</subroutineDec>\r\n'
+        this.output += '</subroutineDec>\r\n'
     },
 
-    _compileSubroutineBody(key, val, indent) {
+    _compileSubroutineBody(key, val) {
         let temp, line
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<subroutineBody>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<subroutineBody>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
@@ -187,9 +186,9 @@ CompilationEngine.prototype = {
 
         while (true) {
             if (val == 'var') {
-                this._compileVarDec(key, val, indent2)
+                this._compileVarDec(key, val)
             } else {
-                this._compileStatements(key, val, line, indent2)
+                this._compileStatements(key, val, line)
             }
 
             temp = this._getNextToken()
@@ -198,7 +197,7 @@ CompilationEngine.prototype = {
             line = temp[2]
 
             if (val == '}') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
                 break
             } else {
                 switch (val) {
@@ -215,14 +214,14 @@ CompilationEngine.prototype = {
             }
         }
         
-        this.output += indent + '</subroutineBody>\r\n'
+        this.output += '</subroutineBody>\r\n'
     },
 
-    _compileParameterList(indent) {
+    _compileParameterList() {
         let key, val, temp
-        let indent2 = indent + this._createSpace(2)
+        
 
-        this.output += indent + '<parameterList>\r\n'
+        this.output += '<parameterList>\r\n'
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
@@ -232,19 +231,19 @@ CompilationEngine.prototype = {
                 error(key, val, 'keyword')
             } else {
                 while (key == 'keyword') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
 
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
                     if (key == 'identifier') {
-                        this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                        this.output += `<${key}> ${val} </${key}>\r\n`
 
                         temp = this._getNextToken()
                         key = temp[0]
                         val = temp[1]
                         if (val == ',') {
-                            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                            this.output += `<${key}> ${val} </${key}>\r\n`
                             temp = this._getNextToken()
                             key = temp[0]
                             val = temp[1]
@@ -256,21 +255,21 @@ CompilationEngine.prototype = {
             }
         }
         
-        this.output += indent + '</parameterList>\r\n'
+        this.output += '</parameterList>\r\n'
         this.i--
     },
 
-    _compileVarDec(key, val, indent) {
+    _compileVarDec(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<varDec>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<varDec>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (key == 'keyword' || key == 'identifier') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
@@ -280,18 +279,18 @@ CompilationEngine.prototype = {
             }
 
             while (key == 'identifier') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == ',') {
-                   this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                   this.output += `<${key}> ${val} </${key}>\r\n`
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1] 
                 } else if (val == ';') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                     break
                 } else {
                     error(key, val, ', | ;')
@@ -301,40 +300,40 @@ CompilationEngine.prototype = {
             error(key, val, 'keyword | identifier')
         }
 
-        this.output += indent + '</varDec>\r\n'
+        this.output += '</varDec>\r\n'
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (val == 'var') {
-            this._compileVarDec(key, val, indent)
+            this._compileVarDec(key, val)
         } else {
             this.i--
         }
     },
 
-    _compileStatements(key, val, line, indent) {
+    _compileStatements(key, val, line) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<statements>\r\n'
+        
+        this.output += '<statements>\r\n'
 
         while (val !== '}') {
             switch (val) {
                 case 'if':
-                    this._compileIf(key, val, indent2)
+                    this._compileIf(key, val)
                     break
                 case 'while':
-                    this._compileWhile(key, val, indent2)
+                    this._compileWhile(key, val)
                     break
                 case 'do':
-                    this._compileDo(key, val, indent2)
+                    this._compileDo(key, val)
                     break
                 case 'return':
-                    this._compileReturn(key, val, indent2)
+                    this._compileReturn(key, val)
                     break
                 case 'let':
-                    this._compileLet(key, val, indent2)
+                    this._compileLet(key, val)
                     break
                 default:
                     this._error(key, val, 'if | while | do | return | let')
@@ -346,73 +345,73 @@ CompilationEngine.prototype = {
             line = temp[2]
         }
         this.i--
-        this.output += indent + '</statements>\r\n'
+        this.output += '</statements>\r\n'
     },
 
-    _compileDo(key, val, indent) {
+    _compileDo(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<doStatement>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<doStatement>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1] 
 
         if (key == 'identifier') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
-            this._compilePartOfCall(key, val, indent2)
+            this._compilePartOfCall(key, val)
             
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
             if (val == ';') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val, ';')
             }  
         } else {
             this._error(key, val, 'identifier')
         }
-        this.output += indent + '</doStatement>\r\n'
+        this.output += '</doStatement>\r\n'
     },
 
-    _compileLet(key, val, indent) {
+    _compileLet(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<letStatement>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<letStatement>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1] 
 
         if (key == 'identifier') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == '[') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-                this._compileExpression(indent2)
+                this.output += `<${key}> ${val} </${key}>\r\n`
+                this._compileExpression()
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == ']') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
 
                     if (val == '=') {
-                        this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-                        this._compileExpression(indent2)
+                        this.output += `<${key}> ${val} </${key}>\r\n`
+                        this._compileExpression()
                     } else {
                         this._error(key, val, '=')
                     }
@@ -420,8 +419,8 @@ CompilationEngine.prototype = {
                     this._error(key, val, ']')
                 }
             } else if (val == '=') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-                this._compileExpression(indent2)
+                this.output += `<${key}> ${val} </${key}>\r\n`
+                this._compileExpression()
             } else {
                 this._error(key, val, '[ | =')
             }
@@ -431,56 +430,56 @@ CompilationEngine.prototype = {
             val = temp[1]
 
             if (val == ';') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val, ';')
             }
         } else {
             this._error(key, val, 'identifier')
         }
-        this.output += indent + '</letStatement>\r\n'
+        this.output += '</letStatement>\r\n'
     },
 
-    _compileWhile(key, val, indent) {
+    _compileWhile(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<whileStatement>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<whileStatement>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (val == '(') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-            this._compileExpression(indent2)
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            this._compileExpression()
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == ')') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
                 line = temp[2]
 
                 if (val == '{') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                     
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
                     line = temp[2]
-                    this._compileStatements(key, val, line, indent2)
+                    this._compileStatements(key, val, line)
 
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
 
                     if (val == '}') {
-                        this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                        this.output += `<${key}> ${val} </${key}>\r\n`
                     } else {
                         this._error(key, val, '}')
                     }
@@ -493,57 +492,57 @@ CompilationEngine.prototype = {
         } else {
             this._error(key, val, '(')
         }
-        this.output += indent + '</whileStatement>\r\n'
+        this.output += '</whileStatement>\r\n'
     },
 
-    _compileIf(key, val, indent) {
+    _compileIf(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<ifStatement>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<ifStatement>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1] 
 
         if (val == '(') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-            this._compileExpression(indent2)
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            this._compileExpression()
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == ')') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
 
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == '{') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                     temp = this._getNextToken()
                     let line
                     key = temp[0]
                     val = temp[1] 
                     line = temp[2]
 
-                    this._compileStatements(key, val, line, indent2)
+                    this._compileStatements(key, val, line)
 
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1] 
 
                     if (val == '}') {
-                        this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                        this.output += `<${key}> ${val} </${key}>\r\n`
 
                         temp = this._getNextToken()
                         key = temp[0]
                         val = temp[1] 
 
                         if (val == 'else') {
-                            this._compileElse(key, val, indent)
+                            this._compileElse(key, val)
                         } else {
                             this.i--
                         }
@@ -560,31 +559,31 @@ CompilationEngine.prototype = {
             this._error(key, val, '(')
         }
 
-        this.output += indent + '</ifStatement>\r\n'
+        this.output += '</ifStatement>\r\n'
     },  
 
-    _compileElse(key, val, indent) {
+    _compileElse(key, val) {
         let temp, line
-        this.output += indent + `<${key}> ${val} </${key}>\r\n`
+        this.output += `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (val == '{') {
-            this.output += indent + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
             line = temp[2]
-            this._compileStatements(key, val, line, indent)
+            this._compileStatements(key, val, line)
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == '}') {
-                this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val, '}')
             }
@@ -593,40 +592,39 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compileReturn(key, val, indent) {
+    _compileReturn(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<returnStatement>\r\n'
-                     + indent2 + `<${key}> ${val} </${key}>\r\n`
+        
+        this.output += '<returnStatement>\r\n'
+                     + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (val == ';') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
         } else {
             this.i--
-            this._compileExpression(indent2)
+            this._compileExpression()
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == ';') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val, ';')
             }
         }
         
-        this.output += indent + '</returnStatement>\r\n'
+        this.output += '</returnStatement>\r\n'
     },
 
-    _compileExpression(indent) {
+    _compileExpression() {
         let key, val, temp, line
-        let indent2 = indent + this._createSpace(2)
 
-        this.output += indent + '<expression>\r\n'
+        this.output += '<expression>\r\n'
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1] 
@@ -640,16 +638,16 @@ CompilationEngine.prototype = {
 
         while (true) {
             if (key == 'identifier' || key == 'integerConstant' || key == 'stringConstant') {
-                this._compileTerm(key, val, indent2)
+                this._compileTerm(key, val)
             } else if (val == '-' || val == '~') {
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
                 let preVal = preObj[key]
                 
                 if (preKey == 'identifier' || preVal == ')') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                 } else {
-                    this._compileTerm(key, val, indent2)
+                    this._compileTerm(key, val)
                 }
             } else {
                 switch (val) {
@@ -658,10 +656,10 @@ CompilationEngine.prototype = {
                     case 'null':
                     case 'this':
                     case '(':
-                        this._compileTerm(key, val, indent2)
+                        this._compileTerm(key, val)
                         break
                     default:
-                        this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                        this.output += `<${key}> ${val} </${key}>\r\n`
                 }
             }
 
@@ -675,97 +673,97 @@ CompilationEngine.prototype = {
             }
         }
 
-        this.output += indent + '</expression>\r\n'
+        this.output += '</expression>\r\n'
     },
 
-    _compileTerm(key, val, indent) {
+    _compileTerm(key, val) {
         let temp
-        let indent2 = indent + this._createSpace(2)
-        this.output += indent + '<term>\r\n'
+        
+        this.output += '<term>\r\n'
                      
         if (val == '(') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-            this._compileExpression(indent2)
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            this._compileExpression()
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
             if (val == ')') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val , ')')
             }
         } else if (val == '-' || val == '~') {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val != ')' && val != ']') {
-                this._compileTerm(key, val, indent2)
+                this._compileTerm(key, val)
             } 
         } else {
-            this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == '[') {
-                this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
-                this._compileExpression(indent2)
+                this.output += `<${key}> ${val} </${key}>\r\n`
+                this._compileExpression()
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
                 
                 if (val == ']') {                       
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                 } else {
                     this._error(key, val, ']')
                 }
             } else if (val == '.' || val == '(') {
-                this._compilePartOfCall(key, val, indent2)
+                this._compilePartOfCall(key, val)
             } else {
                 this.i--
             }
         }
 
-        this.output += indent + '</term>\r\n'
+        this.output += '</term>\r\n'
     },
 
-    _compilePartOfCall(key, val, indent) {
+    _compilePartOfCall(key, val) {
         let temp
         if (val == '(') {
-            this.output += indent + `<${key}> ${val} </${key}>\r\n`
-            this._compileExpressionList(indent)
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            this._compileExpressionList()
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (val == ')') {
-                this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val, ')')
             }
         } else if (val == '.') {
-            this.output += indent + `<${key}> ${val} </${key}>\r\n`
+            this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (key == 'identifier') {
-                this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                this.output += `<${key}> ${val} </${key}>\r\n`
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
                 if (val == '(') {
-                    this.output += indent + `<${key}> ${val} </${key}>\r\n`
-                    this._compileExpressionList(indent)
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._compileExpressionList()
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
 
                     if (val == ')') {
-                        this.output += indent + `<${key}> ${val} </${key}>\r\n`
+                        this.output += `<${key}> ${val} </${key}>\r\n`
                     } else {
                         this._error(key, val, ')')
                     }
@@ -780,27 +778,27 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compileExpressionList(indent) {
+    _compileExpressionList() {
         let key, val, temp
-        let indent2 = indent + this._createSpace(2)
+        
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
-        this.output += indent + '<expressionList>\r\n'
+        this.output += '<expressionList>\r\n'
 
         if (val == ')' || val == ',') {
             this.i--
         } else {
             this.i--
             while (true) {
-                this._compileExpression(indent2)
+                this._compileExpression()
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
 
                 if (val == ',') {
-                    this.output += indent2 + `<${key}> ${val} </${key}>\r\n`
+                    this.output += `<${key}> ${val} </${key}>\r\n`
                 } else if (val == ')') {
                     this.i--
                     break
@@ -808,7 +806,7 @@ CompilationEngine.prototype = {
             }
         }
 
-        this.output += indent + '</expressionList>\r\n'
+        this.output += '</expressionList>\r\n'
     },
 
     createXMLFile() {
@@ -828,14 +826,6 @@ CompilationEngine.prototype = {
         let error = 'line:' + this.tokens[this.i].line + ' syntax error: {' + key + ': ' + val 
                   + '}\r\nExpect the type of key to be ' + type + '\r\nat ' + this.rawFile
         throw error
-    },
-
-    _createSpace(num) {
-        let space = ''
-        while (num--) {
-            space += ' '
-        }
-        return space
     }
 }
 
