@@ -1,4 +1,9 @@
 const fs = require('fs')
+const SymbolTable = require('./symbolTable')
+const VMWriter = require('./VMWriter')
+const mainTable = new SymbolTable()
+const subTable = new SymbolTable()
+let vm 
 
 function CompilationEngine(tokens, fileName) {
     this.outputPath = fileName + '.xml'
@@ -8,6 +13,8 @@ function CompilationEngine(tokens, fileName) {
     this.output = ''
     // index
     this.i = -1
+    
+    vm = new VMWriter(fileName)
     this._compileClass()
 }
 
