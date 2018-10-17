@@ -1,3 +1,5 @@
+const fs = require('fs')
+
 function VMWriter(fileName) {
     this.output = ''
     this.outputPath = fileName + '.vm'
@@ -5,15 +7,15 @@ function VMWriter(fileName) {
 
 VMWriter.prototype = {
     writePush(segment, index) {
-        this.output += `push ${segment} index\r\n`
+        this.output += `push ${segment} ${index}\r\n`
     },
 
     writePop(segment, index) {
-        this.output += `pop ${segment} index\r\n`
+        this.output += `pop ${segment} ${index}\r\n`
     },
 
     writeArithmetic(command) {
-        this.output += command
+        this.output += command + '\r\n'
     },
 
     writeLabel(label) {
@@ -29,11 +31,11 @@ VMWriter.prototype = {
     },
 
     writeCall(name, nArgs) {
-        this.output += `call ${name} nArgs\r\n`
+        this.output += `call ${name} ${nArgs}\r\n`
     },
 
     writeFunction(name, nArgs) {
-        this.output += `function ${name} nArgs\r\n`
+        this.output += `function ${name} ${nArgs}\r\n`
     },
 
     writeReturn() {

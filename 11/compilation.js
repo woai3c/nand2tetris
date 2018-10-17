@@ -1,11 +1,44 @@
 const fs = require('fs')
 const SymbolTable = require('./symbolTable')
 const VMWriter = require('./VMWriter')
-const mainTable = new SymbolTable()
-const subTable = new SymbolTable()
+// 类表
+let mainTable
+// 子程序表
+let subTable
+// VMWriter实例 
 let vm 
+// 局部变量个数
+let localNum
+// 子程序名字
+let funcName
+
+const ifTrueLabel = 'IF_TRUE_'
+const ifFalseLabel = 'IF_FALSE_'
+const ifEndLabel = 'IF_END_'
+const whileLabel = 'WHILE_EXP_'
+const whileEndLabel = 'WHILE_END_'
+
+// if
+let ifIndex = -1
+// while
+let whileIndex = -1
+
+let op 
+const opObj= {
+    '+': 'add',
+    '-': 'sub',
+    '&amp;': 'and',
+    '|': 'or',
+    '&lt;': 'lt',
+    '&gt;': 'gt',
+    '=': 'eq',
+    '~': 'not'
+}
 
 function CompilationEngine(tokens, fileName) {
+    this.fileName = fileName
+    // 类名
+    this.class = ''
     this.outputPath = fileName + '.xml'
     this.rawFile = fileName + '.jack'
     this.tokens = tokens
@@ -13,12 +46,20 @@ function CompilationEngine(tokens, fileName) {
     this.output = ''
     // index
     this.i = -1
-    
-    vm = new VMWriter(fileName)
-    this._compileClass()
+
+    this._init()
 }
 
 CompilationEngine.prototype = {
+    _init() {
+        mainTable = new SymbolTable()
+        subTable = new SymbolTable()
+        vm = new VMWriter(this.fileName)
+
+        this._compileClass()
+        vm.createVMFile()
+    },
+
     _compileClass() {
         const tokens = this.tokens
         let key, val, temp
@@ -37,7 +78,7 @@ CompilationEngine.prototype = {
 
             if (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
-
+                this.class = val
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
@@ -65,6 +106,10 @@ CompilationEngine.prototype = {
                             case 'constructor':
                             case 'function':
                             case 'method':
+                                // 重置子符号表
+                                subTable.startSubroutine()
+                                funcName = ''
+                                localNum = 0
                                 this._compileSubroutine(key, val)
                                 break
                             default:
@@ -86,17 +131,20 @@ CompilationEngine.prototype = {
     },
 
     _compileClassVarDec(key, val) {
-        let temp
-        
+        // type, kind 变量的类型和种类
+        let temp, type, kind
+        kind = val
         this.output += '<classVarDec>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
+        
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
         if (key == 'keyword' || key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
 
+            type = val
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
@@ -107,6 +155,8 @@ CompilationEngine.prototype = {
 
             while (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
+                // 符号表收集变量的各个参数
+                mainTable.define(val, type, kind)
 
                 temp = this._getNextToken()
                 key = temp[0]
@@ -133,27 +183,36 @@ CompilationEngine.prototype = {
 
     _compileSubroutine(key, val) {
         let temp
-        
+
         this.output += '<subroutineDec>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
-        if (key != 'identifier' && key != 'keyword') {
-            this._error(key, val, 'identifier | keyword')
-        }
-
-        while (key == 'identifier' || key == 'keyword') {
+        if (key == 'identifier' || key == 'keyword') {
             this.output += `<${key}> ${val} </${key}>\r\n`
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
+
+            if (key == 'identifier') {
+                this.output += `<${key}> ${val} </${key}>\r\n`
+                // 函数名
+                funcName = this.class + '.' + val
+
+                temp = this._getNextToken()
+                key = temp[0]
+                val = temp[1]
+            } else {
+                this._error(key, val, 'identifier')
+            }
+        } else {
+            this._error(key, val, 'identifier | keyword')
         }
 
         if (val == '(') {
             this.output += `<${key}> ${val} </${key}>\r\n`
-            this._compileParameterList()
 
             temp = this._getNextToken()
             key = temp[0]
@@ -195,6 +254,7 @@ CompilationEngine.prototype = {
             if (val == 'var') {
                 this._compileVarDec(key, val)
             } else {
+                vm.writeFunction(funcName, localNum)
                 this._compileStatements(key, val, line)
             }
 
@@ -225,8 +285,7 @@ CompilationEngine.prototype = {
     },
 
     _compileParameterList() {
-        let key, val, temp
-        
+        let key, val, temp, type
 
         this.output += '<parameterList>\r\n'
         temp = this._getNextToken()
@@ -234,17 +293,21 @@ CompilationEngine.prototype = {
         val = temp[1]
 
         if (val !== ')') {
-            if (key !== 'keyword') {
-                error(key, val, 'keyword')
+            if (key !== 'keyword' && key !== 'identifier') {
+                this._error(key, val, 'keyword | identifier')
             } else {
-                while (key == 'keyword') {
+                while (key == 'keyword' || key == 'identifier') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
+                    // 类型
+                    type = val
 
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
                     if (key == 'identifier') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
+                        // 种类
+                        subTable.define(val, type, 'argument')
 
                         temp = this._getNextToken()
                         key = temp[0]
@@ -256,7 +319,7 @@ CompilationEngine.prototype = {
                             val = temp[1]
                         }
                     } else {
-                        error(key, val, 'identifier')
+                        this._error(key, val, 'identifier')
                     }
                 }
             }
@@ -267,7 +330,7 @@ CompilationEngine.prototype = {
     },
 
     _compileVarDec(key, val) {
-        let temp
+        let temp, type
         
         this.output += '<varDec>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
@@ -277,16 +340,25 @@ CompilationEngine.prototype = {
 
         if (key == 'keyword' || key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            // 类型
+            type = val
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (key !== 'identifier') {
-                error(key, val, 'identifier')
+                this._error(key, val, 'identifier')
             }
 
             while (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
+
+                // 定义局部变量
+                subTable.define(val, type, 'local')
+                // 局部变量个数+1
+                localNum++
+
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
@@ -300,11 +372,11 @@ CompilationEngine.prototype = {
                     this.output += `<${key}> ${val} </${key}>\r\n`
                     break
                 } else {
-                    error(key, val, ', | ;')
+                    this._error(key, val, ', | ;')
                 }
             }
         } else {
-            error(key, val, 'keyword | identifier')
+            this._error(key, val, 'keyword | identifier')
         }
 
         this.output += '</varDec>\r\n'
@@ -449,7 +521,7 @@ CompilationEngine.prototype = {
 
     _compileWhile(key, val) {
         let temp
-        
+        whileIndex++
         this.output += '<whileStatement>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
@@ -457,9 +529,12 @@ CompilationEngine.prototype = {
         key = temp[0]
         val = temp[1]
 
+        vm.writeLabel(whileLabel + whileIndex)
         if (val == '(') {
             this.output += `<${key}> ${val} </${key}>\r\n`
             this._compileExpression()
+            vm.writeArithmetic('not')
+            vm.writeIf(whileEndLabel + whileIndex)
 
             temp = this._getNextToken()
             key = temp[0]
@@ -484,6 +559,9 @@ CompilationEngine.prototype = {
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
+
+                    vm.writeGoto(whileLabel + whileIndex)
+                    vm.writeLabel(whileEndLabel + whileIndex)
 
                     if (val == '}') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
@@ -527,6 +605,10 @@ CompilationEngine.prototype = {
                 key = temp[0]
                 val = temp[1]
 
+                ifIndex++
+                vm.writeIf(ifTrueLabel + ifIndex)
+                vm.writeGoto(ifFalseLabel + ifIndex)
+
                 if (val == '{') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
                     temp = this._getNextToken()
@@ -535,12 +617,15 @@ CompilationEngine.prototype = {
                     val = temp[1] 
                     line = temp[2]
 
+                    vm.writeLabel(ifTrueLabel + ifIndex)
+
                     this._compileStatements(key, val, line)
 
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1] 
 
+                    vm.writeGoto(ifEndLabel + ifIndex)
                     if (val == '}') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
 
@@ -549,10 +634,13 @@ CompilationEngine.prototype = {
                         val = temp[1] 
 
                         if (val == 'else') {
+                            vm.writeLabel(ifFalseLabel + ifIndex)
                             this._compileElse(key, val)
+                            vm.writeGoto(ifEndLabel + ifIndex)
                         } else {
                             this.i--
                         }
+                        vm.writeLabel(ifEndLabel + ifIndex)
                     } else {
                         this._error(key, val, '}')
                     }
@@ -645,16 +733,39 @@ CompilationEngine.prototype = {
 
         while (true) {
             if (key == 'identifier' || key == 'integerConstant' || key == 'stringConstant') {
+
+                let segment = subTable.kindOf(val)
+                if (segment == 'none') {
+                    segment = mainTable.kindOf(val)
+                    if (segment != 'none') {
+                        vm.writePush(segment, mainTable.indexOf(val))
+                    }
+                } else {
+                    vm.writePush(segment, subTable.indexOf(val))
+                }
+
                 this._compileTerm(key, val)
-            } else if (val == '-' || val == '~') {
+                if (op) {
+                    vm.writeArithmetic(op)
+                    op = ''
+                }
+            } else if (val == '-' || val == '~') { 
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
                 let preVal = preObj[key]
                 
                 if (preKey == 'identifier' || preVal == ')') {
+                    // 正常的op
                     this.output += `<${key}> ${val} </${key}>\r\n`
                 } else {
+                    // 针对负数和取反操作
                     this._compileTerm(key, val)
+
+                    if (val == '-') {
+                        vm.writeArithmetic('neg')
+                    } else {
+                        vm.writeArithmetic('not')
+                    }
                 }
             } else {
                 switch (val) {
@@ -667,6 +778,7 @@ CompilationEngine.prototype = {
                         break
                     default:
                         this.output += `<${key}> ${val} </${key}>\r\n`
+                        op = opObj[val]
                 }
             }
 

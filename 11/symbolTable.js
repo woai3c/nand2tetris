@@ -3,14 +3,20 @@ function SymbolTable() {
     this.kindIndex = {
         static: 0,
         field: 0,
-        arg: 0,
-        var: 0
+        argument: 0,
+        local: 0
     }
 }
 
 SymbolTable.prototype = {
     startSubroutine() {
-
+        this.table = {}
+        this.kindIndex = {
+            static: 0,
+            field: 0,
+            argument: 0,
+            local: 0
+        }
     },
 
     define(name, type, kind) {
