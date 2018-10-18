@@ -642,7 +642,7 @@ CompilationEngine.prototype = {
             } else if (val == '-' || val == '~') {
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
-                let preVal = preObj[key]
+                let preVal = preObj[preKey]
                 
                 if (preKey == 'identifier' || preVal == ')') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
