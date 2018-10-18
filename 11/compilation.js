@@ -8,9 +8,11 @@ let subTable
 // VMWriter实例 
 let vm 
 // 局部变量个数
-let localNum
-// 子程序名字
-let funcName
+let localNum = 0
+// 函数名
+let funcName = ''
+// 参数个数
+let nArgs = 0
 
 const ifTrueLabel = 'IF_TRUE_'
 const ifFalseLabel = 'IF_FALSE_'
@@ -32,7 +34,9 @@ const opObj= {
     '&lt;': 'lt',
     '&gt;': 'gt',
     '=': 'eq',
-    '~': 'not'
+    '~': 'not',
+    '/': 'call Math.divide 2',
+    '*': 'call Math.multiply 2'
 }
 
 function CompilationEngine(tokens, fileName) {
@@ -213,6 +217,7 @@ CompilationEngine.prototype = {
 
         if (val == '(') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            this._compileParameterList()
 
             temp = this._getNextToken()
             key = temp[0]
@@ -255,6 +260,8 @@ CompilationEngine.prototype = {
                 this._compileVarDec(key, val)
             } else {
                 vm.writeFunction(funcName, localNum)
+                funcName = ''
+                localNum = 0
                 this._compileStatements(key, val, line)
             }
 
@@ -407,6 +414,10 @@ CompilationEngine.prototype = {
                     break
                 case 'do':
                     this._compileDo(key, val)
+                    vm.writeCall(funcName, nArgs)
+                    vm.writePop('temp', 0)
+                    funcName = ''
+                    nArgs = 0
                     break
                 case 'return':
                     this._compileReturn(key, val)
@@ -439,11 +450,13 @@ CompilationEngine.prototype = {
 
         if (key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            funcName += val
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
             this._compilePartOfCall(key, val)
-            
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
@@ -460,7 +473,7 @@ CompilationEngine.prototype = {
 
     _compileLet(key, val) {
         let temp
-        
+        let variable = ''
         this.output += '<letStatement>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
@@ -470,6 +483,7 @@ CompilationEngine.prototype = {
 
         if (key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            variable += val
 
             temp = this._getNextToken()
             key = temp[0]
@@ -477,6 +491,7 @@ CompilationEngine.prototype = {
 
             if (val == '[') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
+
                 this._compileExpression()
                 temp = this._getNextToken()
                 key = temp[0]
@@ -484,6 +499,7 @@ CompilationEngine.prototype = {
 
                 if (val == ']') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
+
                     temp = this._getNextToken()
                     key = temp[0]
                     val = temp[1]
@@ -491,6 +507,12 @@ CompilationEngine.prototype = {
                     if (val == '=') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
                         this._compileExpression()
+                        vm.writePop('temp', 0)
+                        this._writeVariable(variable)
+                        vm.writeArithmetic('add')
+                        vm.writePop('pointer', 1)
+                        vm.writePush('temp', 0)
+                        vm.writePop('that', 0)
                     } else {
                         this._error(key, val, '=')
                     }
@@ -500,6 +522,9 @@ CompilationEngine.prototype = {
             } else if (val == '=') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
                 this._compileExpression()
+                // pop
+
+                this._writeVariable(variable, true)
             } else {
                 this._error(key, val, '[ | =')
             }
@@ -698,6 +723,8 @@ CompilationEngine.prototype = {
         val = temp[1]
 
         if (val == ';') {
+            vm.writePush('constant', 0)
+            vm.writeReturn()
             this.output += `<${key}> ${val} </${key}>\r\n`
         } else {
             this.i--
@@ -707,6 +734,7 @@ CompilationEngine.prototype = {
             val = temp[1]
 
             if (val == ';') {
+                vm.writeReturn()
                 this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
                 this._error(key, val, ';')
@@ -732,23 +760,64 @@ CompilationEngine.prototype = {
         }
 
         while (true) {
-            if (key == 'identifier' || key == 'integerConstant' || key == 'stringConstant') {
+            if (key == 'identifier') {
+                let nextObj = this.tokens[this.i + 1]
+                let nextKey = Object.keys(nextObj)[0]
+                let nextVal = nextObj[nextKey]
 
-                let segment = subTable.kindOf(val)
-                if (segment == 'none') {
-                    segment = mainTable.kindOf(val)
-                    if (segment != 'none') {
-                        vm.writePush(segment, mainTable.indexOf(val))
+                if (nextVal != '.') {
+                    this._writeVariable(val)
+                    if (op && nextVal != '[' && nextVal != ']') {
+                        vm.writeArithmetic(op)
+                        op = ''
                     }
                 } else {
-                    vm.writePush(segment, subTable.indexOf(val))
+                    funcName += val
                 }
 
+                this._compileTerm(key, val)
+            } else if (val == 'true' || val == 'null' || val == 'false') {
+                switch (val) {
+                    case 'null':
+                    case 'false':
+                        vm.writePush('constant', 0)
+                        break
+                    case 'true':
+                        vm.writePush('constant', 0)
+                        vm.writeArithmetic('neg')
+                        break
+                }
                 this._compileTerm(key, val)
                 if (op) {
                     vm.writeArithmetic(op)
                     op = ''
                 }
+            } else if (key == 'integerConstant' || key == 'stringConstant') {
+                if (key == 'integerConstant') {
+                    vm.writePush('constant', val)
+                    let preObj = this.tokens[this.i - 1]
+                    let preKey = Object.keys(preObj)[0]
+                    let preVal = preObj[preKey]
+
+                    if (op && preVal !== '(') {
+                        vm.writeArithmetic(op)
+                        op = ''
+                    }
+                } else {
+                    let strArry = [...val]
+                    let length = strArry.length
+                    let code
+
+                    vm.writePush('constant', length)
+                    vm.writeCall('String.new', 1)
+                    strArry.forEach(s => {
+                        code = s.charCodeAt()
+                        vm.writePush('constant', code)
+                        vm.writeCall('String.appendChar', 2)
+                    })
+                }
+                
+                this._compileTerm(key, val)
             } else if (val == '-' || val == '~') { 
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
@@ -788,6 +857,10 @@ CompilationEngine.prototype = {
 
             if (val == ')' || val == ';' || val == ']' || val == ',') {
                 this.i--
+                if (op) {
+                    vm.writeArithmetic(op)
+                    op = ''
+                }
                 break
             }
         }
@@ -797,7 +870,8 @@ CompilationEngine.prototype = {
 
     _compileTerm(key, val) {
         let temp
-        
+        let variable = ''
+
         this.output += '<term>\r\n'
                      
         if (val == '(') {
@@ -823,6 +897,8 @@ CompilationEngine.prototype = {
             } 
         } else {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            variable += val
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
@@ -836,11 +912,21 @@ CompilationEngine.prototype = {
                 
                 if (val == ']') {                       
                     this.output += `<${key}> ${val} </${key}>\r\n`
+                    vm.writeArithmetic('add')
+                    vm.writePop('pointer', 1)
+                    vm.writePush('that', 0)
+                    if (op) {
+                        vm.writeArithmetic(op)
+                        op = ''
+                    }
                 } else {
                     this._error(key, val, ']')
                 }
             } else if (val == '.' || val == '(') {
                 this._compilePartOfCall(key, val)
+                vm.writeCall(funcName, nArgs)
+                funcName = ''
+                nArgs = 0
             } else {
                 this.i--
             }
@@ -865,12 +951,16 @@ CompilationEngine.prototype = {
             }
         } else if (val == '.') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            funcName += val
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
+                funcName += val
+
                 temp = this._getNextToken()
                 key = temp[0]
                 val = temp[1]
@@ -899,7 +989,7 @@ CompilationEngine.prototype = {
 
     _compileExpressionList() {
         let key, val, temp
-        
+
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
@@ -910,7 +1000,9 @@ CompilationEngine.prototype = {
             this.i--
         } else {
             this.i--
+            isCall = true
             while (true) {
+                nArgs++
                 this._compileExpression()
                 temp = this._getNextToken()
                 key = temp[0]
@@ -923,6 +1015,7 @@ CompilationEngine.prototype = {
                     break
                 }
             }
+            isCall = false
         }
 
         this.output += '</expressionList>\r\n'
@@ -937,7 +1030,7 @@ CompilationEngine.prototype = {
         let obj = this.tokens[this.i]
         let key = Object.keys(obj)[0]
         let val = obj[key]
-
+        console.log(val)
         return [key, val, obj.line]
     },
 
@@ -945,6 +1038,26 @@ CompilationEngine.prototype = {
         let error = 'line:' + this.tokens[this.i].line + ' syntax error: {' + key + ': ' + val 
                   + '}\r\nExpect the type of key to be ' + type + '\r\nat ' + this.rawFile
         throw error
+    },
+
+    _writeVariable(val, flag) {
+        let segment = subTable.kindOf(val)
+        if (segment == 'none') {
+            segment = mainTable.kindOf(val)
+            if (segment != 'none') {
+                if (flag) {
+                    vm.writePop(segment, mainTable.indexOf(val))
+                } else {
+                    vm.writePush(segment, mainTable.indexOf(val))
+                }
+            }
+        } else {
+            if (flag) {
+                vm.writePop(segment, subTable.indexOf(val))
+            } else {
+                vm.writePush(segment, subTable.indexOf(val))
+            }
+        }
     }
 }
 
