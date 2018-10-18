@@ -2,6 +2,9 @@ class Main {
     function void main() {
         var Generate str;
         var String mainStr;
+        var Array a;
+        let a = Array.new(10);
+        let a[1+2] = 10;
         let mainStr = Main.mainStr();
         let str = Generate.new("this is a test");
         do Output.printString(Generate.func());
@@ -13,6 +16,8 @@ class Main {
         do Output.printString(Generate.newTest());
         do Output.println();
         do Output.printString(mainStr);
+        do Output.println();
+        do Output.printInt(a[3]);
         return;
     }
 

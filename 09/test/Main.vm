@@ -1,4 +1,17 @@
-function Main.main 2
+function Main.main 3
+push constant 10
+call Array.new 1
+pop local 2
+push constant 1
+push constant 2
+add
+push local 2
+add
+push constant 10
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
 call Main.mainStr 0
 pop local 1
 push constant 14
@@ -56,6 +69,15 @@ call Output.println 0
 pop temp 0
 push local 1
 call Output.printString 1
+pop temp 0
+call Output.println 0
+pop temp 0
+push constant 3
+push local 2
+add
+pop pointer 1
+push that 0
+call Output.printInt 1
 pop temp 0
 push constant 0
 return
