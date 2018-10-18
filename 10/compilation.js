@@ -220,16 +220,17 @@ CompilationEngine.prototype = {
     _compileParameterList() {
         let key, val, temp
         
+
         this.output += '<parameterList>\r\n'
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1]
 
         if (val !== ')') {
-            if (key != 'keyword' || key != 'identifier') {
-                error(key, val, 'keyword | identifier')
+            if (key !== 'keyword') {
+                error(key, val, 'keyword')
             } else {
-                while (key == 'keyword' || key == 'identifier') {
+                while (key == 'keyword') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
 
                     temp = this._getNextToken()
@@ -246,8 +247,6 @@ CompilationEngine.prototype = {
                             temp = this._getNextToken()
                             key = temp[0]
                             val = temp[1]
-                        } else if (val == ')') {
-                            break
                         }
                     } else {
                         error(key, val, 'identifier')
@@ -255,8 +254,9 @@ CompilationEngine.prototype = {
                 }
             }
         }
-        this.i--
+        
         this.output += '</parameterList>\r\n'
+        this.i--
     },
 
     _compileVarDec(key, val) {
@@ -642,7 +642,7 @@ CompilationEngine.prototype = {
             } else if (val == '-' || val == '~') {
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
-                let preVal = preObj[preKey]
+                let preVal = preObj[key]
                 
                 if (preKey == 'identifier' || preVal == ')') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
@@ -818,6 +818,7 @@ CompilationEngine.prototype = {
         let obj = this.tokens[this.i]
         let key = Object.keys(obj)[0]
         let val = obj[key]
+
         return [key, val, obj.line]
     },
 

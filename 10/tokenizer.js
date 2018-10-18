@@ -21,6 +21,7 @@ function JackTokenizer(data, fileName) {
     this.reg2 = /^(\/\*\*)/
     this.reg3 = /^\*[^\/]/
     this.reg4 = /^(\*\/)/
+    this.reg5 = /^\*[^\/].*(\*\/)$/
 
     // 单个字符匹配
     this.wordRe = /\w|_/
@@ -143,10 +144,10 @@ JackTokenizer.prototype = {
                 this.line++
                 str = this.data.shift().trim()
 
-                if (this.reg3.test(str)) {
-                    continue
-                } else if (this.reg4.test(str)) {
+                if (this.reg4.test(str) || this.reg5.test(str)) {
                     break
+                } else if (this.reg3.test(str)) {
+                    continue
                 }
             }
 

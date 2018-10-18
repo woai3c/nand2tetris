@@ -13,6 +13,8 @@ let localNum = 0
 let funcName = ''
 // 参数个数
 let nArgs = 0
+// 双层括号
+let double = false
 
 const ifTrueLabel = 'IF_TRUE_'
 const ifFalseLabel = 'IF_FALSE_'
@@ -25,7 +27,7 @@ let ifIndex = -1
 // while
 let whileIndex = -1
 
-let op 
+let opArry = []
 const opObj= {
     '+': 'add',
     '-': 'sub',
@@ -767,9 +769,8 @@ CompilationEngine.prototype = {
 
                 if (nextVal != '.') {
                     this._writeVariable(val)
-                    if (op && nextVal != '[' && nextVal != ']') {
-                        vm.writeArithmetic(op)
-                        op = ''
+                    if (opArry.length && nextVal != '[' && nextVal != ']') {
+                        vm.writeArithmetic(opArry.pop())
                     }
                 } else {
                     funcName += val
@@ -788,9 +789,8 @@ CompilationEngine.prototype = {
                         break
                 }
                 this._compileTerm(key, val)
-                if (op) {
-                    vm.writeArithmetic(op)
-                    op = ''
+                if (opArry.length) {
+                    vm.writeArithmetic(opArry.pop())
                 }
             } else if (key == 'integerConstant' || key == 'stringConstant') {
                 if (key == 'integerConstant') {
@@ -799,9 +799,8 @@ CompilationEngine.prototype = {
                     let preKey = Object.keys(preObj)[0]
                     let preVal = preObj[preKey]
 
-                    if (op && preVal !== '(') {
-                        vm.writeArithmetic(op)
-                        op = ''
+                    if (opArry.length && preVal != '(') {
+                        vm.writeArithmetic(opArry.pop())
                     }
                 } else {
                     let strArry = [...val]
@@ -821,11 +820,14 @@ CompilationEngine.prototype = {
             } else if (val == '-' || val == '~') { 
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
-                let preVal = preObj[key]
-                
-                if (preKey == 'identifier' || preVal == ')') {
+                let preVal = preObj[preKey]
+
+                if (preKey == 'identifier' || preVal == ')' || preKey == 'integerConstant') {
                     // 正常的op
                     this.output += `<${key}> ${val} </${key}>\r\n`
+                    if (val == '-') {
+                        opArry.push(opObj[val])
+                    } 
                 } else {
                     // 针对负数和取反操作
                     this._compileTerm(key, val)
@@ -847,7 +849,7 @@ CompilationEngine.prototype = {
                         break
                     default:
                         this.output += `<${key}> ${val} </${key}>\r\n`
-                        op = opObj[val]
+                        opArry.push(opObj[val])
                 }
             }
 
@@ -857,9 +859,13 @@ CompilationEngine.prototype = {
 
             if (val == ')' || val == ';' || val == ']' || val == ',') {
                 this.i--
-                if (op) {
-                    vm.writeArithmetic(op)
-                    op = ''
+
+                if (!double) {
+                    if (opArry.length) {
+                        vm.writeArithmetic(opArry.pop())
+                    }  
+                } else {
+                    double = false
                 }
                 break
             }
@@ -875,6 +881,14 @@ CompilationEngine.prototype = {
         this.output += '<term>\r\n'
                      
         if (val == '(') {
+            let preObj = this.tokens[this.i - 1]
+            let preKey = Object.keys(preObj)[0]
+            let preVal = preObj[preKey]
+
+            if (preVal == '(') {
+                double = true
+            }
+
             this.output += `<${key}> ${val} </${key}>\r\n`
             this._compileExpression()
 
@@ -915,10 +929,6 @@ CompilationEngine.prototype = {
                     vm.writeArithmetic('add')
                     vm.writePop('pointer', 1)
                     vm.writePush('that', 0)
-                    if (op) {
-                        vm.writeArithmetic(op)
-                        op = ''
-                    }
                 } else {
                     this._error(key, val, ']')
                 }
@@ -1000,7 +1010,6 @@ CompilationEngine.prototype = {
             this.i--
         } else {
             this.i--
-            isCall = true
             while (true) {
                 nArgs++
                 this._compileExpression()
@@ -1015,7 +1024,6 @@ CompilationEngine.prototype = {
                     break
                 }
             }
-            isCall = false
         }
 
         this.output += '</expressionList>\r\n'
@@ -1030,7 +1038,7 @@ CompilationEngine.prototype = {
         let obj = this.tokens[this.i]
         let key = Object.keys(obj)[0]
         let val = obj[key]
-        console.log(val)
+
         return [key, val, obj.line]
     },
 
