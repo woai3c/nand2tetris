@@ -860,12 +860,14 @@ CompilationEngine.prototype = {
             if (val == ')' || val == ';' || val == ']' || val == ',') {
                 this.i--
 
-                if (!double) {
-                    if (opArry.length) {
-                        vm.writeArithmetic(opArry.pop())
-                    }  
-                } else {
-                    double = false
+                if (val == ')') {
+                    if (!double) {
+                        if (opArry.length) {
+                            vm.writeArithmetic(opArry.pop())
+                        }  
+                    } else {
+                        double = false
+                    }
                 }
                 break
             }
@@ -929,6 +931,9 @@ CompilationEngine.prototype = {
                     vm.writeArithmetic('add')
                     vm.writePop('pointer', 1)
                     vm.writePush('that', 0)
+                    if (opArry.length) {
+                        vm.writeArithmetic(opArry.pop())
+                    }
                 } else {
                     this._error(key, val, ']')
                 }
