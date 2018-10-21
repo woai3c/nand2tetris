@@ -15,10 +15,14 @@ let funcName = ''
 let nArgs = 0
 // 双层括号
 let double = false
+// 是否构造函数
+let isCtr = false
+// 是否方法
+let isMethod = false
 
 const ifTrueLabel = 'IF_TRUE_'
 const ifFalseLabel = 'IF_FALSE_'
-const ifEndLabel = 'IF_END_'
+
 const whileLabel = 'WHILE_EXP_'
 const whileEndLabel = 'WHILE_END_'
 
@@ -112,6 +116,16 @@ CompilationEngine.prototype = {
                             case 'constructor':
                             case 'function':
                             case 'method':
+                                if (val == 'constructor') {
+                                    isCtr = true
+                                    isMethod = false
+                                } else if (val == 'method') {
+                                    isCtr = false
+                                    isMethod = true
+                                } else {
+                                    isMethod = false
+                                    isCtr = false
+                                }
                                 // 重置子符号表
                                 subTable.startSubroutine()
                                 funcName = ''
@@ -198,14 +212,24 @@ CompilationEngine.prototype = {
         val = temp[1]
         if (key == 'identifier' || key == 'keyword') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+
+            if (isCtr) {
+                funcName += val
+            }
+
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
 
             if (key == 'identifier') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
-                // 函数名
-                funcName = this.class + '.' + val
+
+                if (isCtr) {
+                    funcName += '.' + val
+                } else {
+                    // 函数名
+                    funcName = this.class + '.' + val
+                }
 
                 temp = this._getNextToken()
                 key = temp[0]
@@ -262,6 +286,20 @@ CompilationEngine.prototype = {
                 this._compileVarDec(key, val)
             } else {
                 vm.writeFunction(funcName, localNum)
+                if (isCtr) {
+                    // 构造函数
+                    let fieldNum = mainTable.varCount('field')
+                    vm.writePush('constant', fieldNum)
+                    vm.writeCall('Memory.alloc', 1)
+                    vm.writePop('pointer', 0)
+                } else if (isMethod) {
+                    // 方法
+                    vm.writePush('argument', 0)
+                    vm.writePop('pointer', 0)
+                }
+
+                isCtr = false
+                isMethod = false
                 funcName = ''
                 localNum = 0
                 this._compileStatements(key, val, line)
@@ -416,6 +454,10 @@ CompilationEngine.prototype = {
                     break
                 case 'do':
                     this._compileDo(key, val)
+                    if (isMethod) {
+                        nArgs++
+                        vm.writePush('pointer', 0)
+                    }
                     vm.writeCall(funcName, nArgs)
                     vm.writePop('temp', 0)
                     funcName = ''
@@ -442,7 +484,8 @@ CompilationEngine.prototype = {
 
     _compileDo(key, val) {
         let temp
-        
+        let funcTempArry 
+
         this.output += '<doStatement>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
@@ -452,12 +495,28 @@ CompilationEngine.prototype = {
 
         if (key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
-            funcName += val
+            funcTempArry = this._getTypeOfVariable(val)
+            if (funcTempArry[1]) {
+                isMethod = true
+                funcName += funcTempArry[0]
+            } else {
+                funcName += val
+            }
 
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
-            this._compilePartOfCall(key, val)
+
+            if (val == '.') {
+                this._compilePartOfCall(key, val)
+            } else if (val == '(') {
+                isMethod = true
+                funcName = this.class + '.' + funcName
+                this._compilePartOfCall(key, val)
+            } else {
+                this._error(key, val, '. | )')
+            }
+            
 
             temp = this._getNextToken()
             key = temp[0]
@@ -506,12 +565,13 @@ CompilationEngine.prototype = {
                     key = temp[0]
                     val = temp[1]
 
+                    this._writeVariable(variable)
+                    vm.writeArithmetic('add')
                     if (val == '=') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
                         this._compileExpression()
+
                         vm.writePop('temp', 0)
-                        this._writeVariable(variable)
-                        vm.writeArithmetic('add')
                         vm.writePop('pointer', 1)
                         vm.writePush('temp', 0)
                         vm.writePop('that', 0)
@@ -652,22 +712,18 @@ CompilationEngine.prototype = {
                     key = temp[0]
                     val = temp[1] 
 
-                    vm.writeGoto(ifEndLabel + ifIndex)
+                    vm.writeLabel(ifFalseLabel + ifIndex)
                     if (val == '}') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
 
                         temp = this._getNextToken()
                         key = temp[0]
                         val = temp[1] 
-
                         if (val == 'else') {
-                            vm.writeLabel(ifFalseLabel + ifIndex)
                             this._compileElse(key, val)
-                            vm.writeGoto(ifEndLabel + ifIndex)
                         } else {
                             this.i--
                         }
-                        vm.writeLabel(ifEndLabel + ifIndex)
                     } else {
                         this._error(key, val, '}')
                     }
@@ -728,6 +784,19 @@ CompilationEngine.prototype = {
             vm.writePush('constant', 0)
             vm.writeReturn()
             this.output += `<${key}> ${val} </${key}>\r\n`
+        } else if (val == 'this') {
+            vm.writePush('pointer', 0)
+            this.output += `<${key}> ${val} </${key}>\r\n`
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1]
+            if (val == ';') {
+                vm.writeReturn()
+                this.output += `<${key}> ${val} </${key}>\r\n`
+            } else {
+                this._error(key, val, ';')
+            }
         } else {
             this.i--
             this._compileExpression()
@@ -769,7 +838,11 @@ CompilationEngine.prototype = {
 
                 if (nextVal != '.') {
                     this._writeVariable(val)
-                    if (opArry.length && nextVal != '[' && nextVal != ']') {
+                    let preObj = this.tokens[this.i - 1]
+                    let preKey = Object.keys(preObj)[0]
+                    let preVal = preObj[preKey]
+
+                    if (opArry.length && nextVal != '[' && nextVal != ']' && preVal != '(') {
                         vm.writeArithmetic(opArry.pop())
                     }
                 } else {
@@ -785,7 +858,7 @@ CompilationEngine.prototype = {
                         break
                     case 'true':
                         vm.writePush('constant', 0)
-                        vm.writeArithmetic('neg')
+                        vm.writeArithmetic('not')
                         break
                 }
                 this._compileTerm(key, val)
@@ -838,18 +911,19 @@ CompilationEngine.prototype = {
                         vm.writeArithmetic('not')
                     }
                 }
+            } else if (val == 'this') {
+                this.output += `<${key}> ${val} </${key}>\r\n`
+                vm.writePush('pointer', 0)
             } else {
                 switch (val) {
-                    case 'true':
-                    case 'false':
-                    case 'null':
-                    case 'this':
                     case '(':
                         this._compileTerm(key, val)
                         break
                     default:
                         this.output += `<${key}> ${val} </${key}>\r\n`
-                        opArry.push(opObj[val])
+                        if (opObj[val] !== undefined) {
+                            opArry.push(opObj[val])
+                        }
                 }
             }
 
@@ -878,7 +952,8 @@ CompilationEngine.prototype = {
 
     _compileTerm(key, val) {
         let temp
-        let variable = ''
+        // 临时函数名
+        let tempName
 
         this.output += '<term>\r\n'
                      
@@ -913,8 +988,8 @@ CompilationEngine.prototype = {
             } 
         } else {
             this.output += `<${key}> ${val} </${key}>\r\n`
-            variable += val
 
+            tempName = val
             temp = this._getNextToken()
             key = temp[0]
             val = temp[1]
@@ -937,8 +1012,23 @@ CompilationEngine.prototype = {
                 } else {
                     this._error(key, val, ']')
                 }
-            } else if (val == '.' || val == '(') {
+            } else if (val == '.') {
                 this._compilePartOfCall(key, val)
+                if (isMethod) {
+                    nArgs++
+                    vm.writePush('pointer', 0)
+                }
+                vm.writeCall(funcName, nArgs)
+                funcName = ''
+                nArgs = 0
+            } else if (val == '(') {
+                isMethod = true
+                funcName = this.class + '.' + tempName
+                this._compilePartOfCall(key, val)
+                if (isMethod) {
+                    nArgs++
+                    vm.writePush('pointer', 0)
+                }
                 vm.writeCall(funcName, nArgs)
                 funcName = ''
                 nArgs = 0
@@ -1058,6 +1148,9 @@ CompilationEngine.prototype = {
         if (segment == 'none') {
             segment = mainTable.kindOf(val)
             if (segment != 'none') {
+                if (segment == 'field') {
+                    segment = 'this'
+                }
                 if (flag) {
                     vm.writePop(segment, mainTable.indexOf(val))
                 } else {
@@ -1070,6 +1163,20 @@ CompilationEngine.prototype = {
             } else {
                 vm.writePush(segment, subTable.indexOf(val))
             }
+        }
+    },
+
+    _getTypeOfVariable(name) {
+        let type = subTable.typeOf(name)
+        if (type == 'none') {
+            type = mainTable.typeOf(name)
+            if (type == 'none') {
+                return [name, false]
+            } else {
+                return [type, true]
+            }
+        } else {
+            return [type, true]
         }
     }
 }
