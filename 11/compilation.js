@@ -13,8 +13,7 @@ let localNum = 0
 let funcName = ''
 // 参数个数
 let nArgs = 0
-// 双层括号
-let double = false
+
 // 是否构造函数
 let isCtr = false
 // 是否方法
@@ -828,226 +827,163 @@ CompilationEngine.prototype = {
     },
 
     _compileExpression() {
-        let key, val, temp, line
-        let hasOp = false
-
         this.output += '<expression>\r\n'
+
+        this._compileTerm()
+
+        let key, val, temp, op
         temp = this._getNextToken()
         key = temp[0]
         val = temp[1] 
-        line = temp[2]
 
-        if (val == ',') {
-            let error = 'line:' + line + ' The expression should not begin with a ,'
-                      + '\r\nat ' + this.rawFile
-            throw error
-        }
+        if (opObj[val] !== undefined) {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            op = opObj[val]
 
-        while (true) {
-            if (key == 'identifier') {
-                let nextObj = this.tokens[this.i + 1]
-                let nextKey = Object.keys(nextObj)[0]
-                let nextVal = nextObj[nextKey]
-
-                if (nextVal != '.' && nextVal != '[') {
-                    this._writeVariable(val)
-                } else if (nextVal != '[') {
-                    let funcTempArry = this._getTypeOfVariable(val)
-                    if (funcTempArry[1]) {
-                        isMethod = true
-                        funcName += funcTempArry[0]
-                        variableOfCall = val
-                    } else {
-                        funcName += val
-                    }
-                }
-
-                this._compileTerm(key, val)
-            } else if (val == 'true' || val == 'null' || val == 'false') {
-                switch (val) {
-                    case 'null':
-                    case 'false':
-                        vm.writePush('constant', 0)
-                        break
-                    case 'true':
-                        vm.writePush('constant', 0)
-                        vm.writeArithmetic('not')
-                        break
-                }
-                this._compileTerm(key, val)
-            } else if (key == 'integerConstant' || key == 'stringConstant') {
-                if (key == 'integerConstant') {
-                    vm.writePush('constant', val)
-                } else {
-                    let strArry = [...val]
-                    let length = strArry.length
-                    let code
-
-                    vm.writePush('constant', length)
-                    vm.writeCall('String.new', 1)
-                    strArry.forEach(s => {
-                        code = s.charCodeAt()
-                        vm.writePush('constant', code)
-                        vm.writeCall('String.appendChar', 2)
-                    })
-                }
-                
-                this._compileTerm(key, val, true)
-            } else if (val == '-' || val == '~') { 
-                let preObj = this.tokens[this.i - 1]
-                let preKey = Object.keys(preObj)[0]
-                let preVal = preObj[preKey]
-
-                if (preKey == 'identifier' || preVal == ')' || preKey == 'integerConstant') {
-                    // 正常的op
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                    if (val == '-') {
-                        opArry.push(opObj[val])
-                        hasOp = true
-                    } 
-                } else {
-                    // 针对负数和取反操作
-                    this._compileTerm(key, val)
-
-                    if (val == '-') {
-                        vm.writeArithmetic('neg')
-                    } else {
-                        vm.writeArithmetic('not')
-                    }
-                }
-            } else {
-                switch (val) {
-                    case 'this':
-                        vm.writePush('pointer', 0)
-                        this._compileTerm(key, val)
-                        break
-                    case '(':
-                        this._compileTerm(key, val)
-                        break
-                    default:
-                        this.output += `<${key}> ${val} </${key}>\r\n`
-                        if (opObj[val] !== undefined) {
-                            opArry.push(opObj[val])
-                            hasOp = true
-                        }
-                }
-            }
-
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == ')' || val == ';' || val == ']' || val == ',') {
-                if (opArry.length && hasOp) {
-                    vm.writeArithmetic(opArry.pop())
-                }
-                this.i--
-                break
-            }
+            this._compileTerm()
+            vm.writeArithmetic(op)
+        } else if (val == ';' || val == ',' || val == ')' || val == ']') {
+            this.i--
         }
 
         this.output += '</expression>\r\n'
     },
     // flag表示整数是否已经被处理过
-    _compileTerm(key, val, flag) {
-        let temp
-        // 临时函数名
-        let tempName
-
+    _compileTerm() {
+        let key, val, temp, tempName
         this.output += '<term>\r\n'
-                     
-        if (val == '(') {
-            let nextObj = this.tokens[this.i + 1]
-            let nextKey = Object.keys(nextObj)[0]
-            let nextVal = nextObj[nextKey]
 
-            if (nextVal == '(') {
-                double = true
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1] 
+        
+        if (key == 'identifier') {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            tempName = val
+
+            temp = this._getNextToken()
+            key = temp[0]
+            val = temp[1] 
+
+            switch (val) {
+                case '(':
+                    isMethod = true
+                    funcName = this.class + '.' + tempName
+                    this._compilePartOfCall(key, val)
+
+                    vm.writeCall(funcName, nArgs)
+                    funcName = ''
+                    nArgs = 0
+                    isMethod = false
+                    variableOfCall = ''
+                    break
+                case '.':
+                    let funcTempArry = this._getTypeOfVariable(tempName)
+                    if (funcTempArry[1]) {
+                        isMethod = true
+                        funcName += funcTempArry[0]
+                        variableOfCall = tempName
+                    } else {
+                        funcName += tempName
+                    }
+
+                    this._compilePartOfCall(key, val)
+
+                    vm.writeCall(funcName, nArgs)
+                    funcName = ''
+                    nArgs = 0
+                    isMethod = false
+                    variableOfCall = ''
+                    break
+                case '[':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._compileExpression()
+                    temp = this._getNextToken()
+                    key = temp[0]
+                    val = temp[1]
+                    
+                    if (val == ']') {                       
+                        this.output += `<${key}> ${val} </${key}>\r\n`
+                        this._writeVariable(tempName)
+                        vm.writeArithmetic('add')
+                        vm.writePop('pointer', 1)
+                        vm.writePush('that', 0)
+                    } else {
+                        this._error(key, val, ']')
+                    }
+                    break
+                default:
+                    this.i--
+                    this._writeVariable(tempName)
             }
+        } else if (val == 'null' || val == 'true' || val == 'false' || val == 'this') {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            switch (val) {
+                case 'null':
+                case 'false':
+                    vm.writePush('constant', 0)
+                    break
+                case 'true':
+                    vm.writePush('constant', 0)
+                    vm.writeArithmetic('not')
+                    break
+                case 'this':
+                    vm.writePush('pointer', 0)
+                    break
+                default:
+                    this._error(key, val, 'null | false | true | this')
+            }
+        } else if (key == 'integerConstant' || key == 'stringConstant') {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            if (key == 'integerConstant') {
+                vm.writePush('constant', val)
+            } else {
+                let strArry = [...val]
+                let length = strArry.length
+                let code
 
+                vm.writePush('constant', length)
+                vm.writeCall('String.new', 1)
+                strArry.forEach(s => {
+                    code = s.charCodeAt()
+                    vm.writePush('constant', code)
+                    vm.writeCall('String.appendChar', 2)
+                })
+            }
+        } else if (val == '-' || val == '~') { 
+            let preObj = this.tokens[this.i - 1]
+            let preKey = Object.keys(preObj)[0]
+            let preVal = preObj[preKey]
+
+            if (preKey == 'identifier' || preVal == ')' || preKey == 'integerConstant') {
+                // 正常的op
+                if (val == '-') {
+                    this.i--
+                } 
+            } else {
+                // 针对负数和取反操作
+                this._compileTerm()
+
+                if (val == '-') {
+                    vm.writeArithmetic('neg')
+                } else {
+                    vm.writeArithmetic('not')
+                }
+            }
+        } else if (val == '(') {
             this.output += `<${key}> ${val} </${key}>\r\n`
             this._compileExpression()
 
             temp = this._getNextToken()
             key = temp[0]
-            val = temp[1]
+            val = temp[1] 
+
             if (val == ')') {
                 this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
-                this._error(key, val , ')')
+                this._error(key, val, ')')
             }
-        } else if (val == '-' || val == '~') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
 
-            if (val != ')' && val != ']') {
-                if (key == 'identifier') {
-                    this._writeVariable(val)
-                }
-                this._compileTerm(key, val)
-            } 
-        } else if (key == 'integerConstant') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            // 如果整数没有被处理过
-            if (!flag) {
-                vm.writePush('constant', val)
-            }
-        } else {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-
-            tempName = val
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == '[') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-                this._compileExpression()
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-                
-                if (val == ']') {                       
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                    this._writeVariable(tempName)
-                    vm.writeArithmetic('add')
-                    vm.writePop('pointer', 1)
-                    vm.writePush('that', 0)
-
-                    let nextObj = this.tokens[this.i + 1]
-                    let nextKey = Object.keys(nextObj)[0]
-                    let nextVal = nextObj[nextKey]
-                } else {
-                    this._error(key, val, ']')
-                }
-            } else if (val == '.') {
-                this._compilePartOfCall(key, val)
-
-                vm.writeCall(funcName, nArgs)
-
-                funcName = ''
-                nArgs = 0
-                isMethod = false
-                variableOfCall = ''
-            } else if (val == '(') {
-                isMethod = true
-                funcName = this.class + '.' + tempName
-                this._compilePartOfCall(key, val)
-                if (isMethod) {
-                    nArgs++
-                    vm.writePush('pointer', 0)
-                }
-                vm.writeCall(funcName, nArgs)
-
-                funcName = ''
-                nArgs = 0
-                isMethod = false
-                variableOfCall = ''
-            } else {
-                this.i--
-            }
         }
 
         this.output += '</term>\r\n'
