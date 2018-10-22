@@ -346,6 +346,9 @@ CompilationEngine.prototype = {
             if (key !== 'keyword' && key !== 'identifier') {
                 this._error(key, val, 'keyword | identifier')
             } else {
+                if (isMethod) {
+                    subTable.define('this', 'object', 'argument')
+                }
                 while (key == 'keyword' || key == 'identifier') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
                     // 类型
@@ -457,19 +460,14 @@ CompilationEngine.prototype = {
                     break
                 case 'do':
                     this._compileDo(key, val)
-                    if (isMethod) {
-                        nArgs++
-                        if (variableOfCall) {
-                            this._writeVariable(variableOfCall)
-                            variableOfCall = ''
-                        } else {
-                            vm.writePush('pointer', 0)
-                        }
-                    }
+
                     vm.writeCall(funcName, nArgs)
                     vm.writePop('temp', 0)
+
                     funcName = ''
                     nArgs = 0
+                    isMethod = false
+                    variableOfCall = ''
                     break
                 case 'return':
                     this._compileReturn(key, val)
@@ -504,6 +502,7 @@ CompilationEngine.prototype = {
         if (key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
             funcTempArry = this._getTypeOfVariable(val)
+
             if (funcTempArry[1]) {
                 isMethod = true
                 funcName += funcTempArry[0]
@@ -798,7 +797,6 @@ CompilationEngine.prototype = {
             vm.writeReturn()
             this.output += `<${key}> ${val} </${key}>\r\n`
         } else if (val == 'this') {
-            vm.writePush('pointer', 0)
             this.i--
             this._compileExpression()
 
@@ -831,6 +829,7 @@ CompilationEngine.prototype = {
 
     _compileExpression() {
         let key, val, temp, line
+        let hasOp = false
 
         this.output += '<expression>\r\n'
         temp = this._getNextToken()
@@ -852,15 +851,13 @@ CompilationEngine.prototype = {
 
                 if (nextVal != '.' && nextVal != '[') {
                     this._writeVariable(val)
-                    let preObj = this.tokens[this.i - 1]
-                    let preKey = Object.keys(preObj)[0]
-                    let preVal = preObj[preKey]
-
-                    if (opArry.length && opObj[preVal] !== undefined) {
-                        vm.writeArithmetic(opArry.pop())
-                    }
-                } else {
-                    if (nextVal != '[') {
+                } else if (nextVal != '[') {
+                    let funcTempArry = this._getTypeOfVariable(val)
+                    if (funcTempArry[1]) {
+                        isMethod = true
+                        funcName += funcTempArry[0]
+                        variableOfCall = val
+                    } else {
                         funcName += val
                     }
                 }
@@ -881,13 +878,6 @@ CompilationEngine.prototype = {
             } else if (key == 'integerConstant' || key == 'stringConstant') {
                 if (key == 'integerConstant') {
                     vm.writePush('constant', val)
-                    let preObj = this.tokens[this.i - 1]
-                    let preKey = Object.keys(preObj)[0]
-                    let preVal = preObj[preKey]
-
-                    if (opArry.length && opObj[preVal] !== undefined) {
-                        vm.writeArithmetic(opArry.pop())
-                    }
                 } else {
                     let strArry = [...val]
                     let length = strArry.length
@@ -913,6 +903,7 @@ CompilationEngine.prototype = {
                     this.output += `<${key}> ${val} </${key}>\r\n`
                     if (val == '-') {
                         opArry.push(opObj[val])
+                        hasOp = true
                     } 
                 } else {
                     // 针对负数和取反操作
@@ -937,6 +928,7 @@ CompilationEngine.prototype = {
                         this.output += `<${key}> ${val} </${key}>\r\n`
                         if (opObj[val] !== undefined) {
                             opArry.push(opObj[val])
+                            hasOp = true
                         }
                 }
             }
@@ -946,23 +938,8 @@ CompilationEngine.prototype = {
             val = temp[1]
 
             if (val == ')' || val == ';' || val == ']' || val == ',') {
-                if (val == ')') {
-                    let nextObj = this.tokens[this.i + 1]
-                    let nextKey = Object.keys(nextObj)[0]
-                    let nextVal = nextObj[nextKey]
-
-                    if (nextVal == ')') {
-                        if (double) {
-                            if (opArry.length) {
-                                vm.writeArithmetic(opArry.pop())
-                            }
-                            double = false
-                        }
-                    } else {
-                        if (opArry.length) {
-                            vm.writeArithmetic(opArry.pop())
-                        }
-                    }
+                if (opArry.length && hasOp) {
+                    vm.writeArithmetic(opArry.pop())
                 }
                 this.i--
                 break
@@ -1006,6 +983,9 @@ CompilationEngine.prototype = {
             val = temp[1]
 
             if (val != ')' && val != ']') {
+                if (key == 'identifier') {
+                    this._writeVariable(val)
+                }
                 this._compileTerm(key, val)
             } 
         } else if (key == 'integerConstant') {
@@ -1039,22 +1019,18 @@ CompilationEngine.prototype = {
                     let nextObj = this.tokens[this.i + 1]
                     let nextKey = Object.keys(nextObj)[0]
                     let nextVal = nextObj[nextKey]
-
-                    if (opArry.length && nextVal != ')') {
-                        vm.writeArithmetic(opArry.pop())
-                    }
                 } else {
                     this._error(key, val, ']')
                 }
             } else if (val == '.') {
                 this._compilePartOfCall(key, val)
-                if (isMethod) {
-                    nArgs++
-                    vm.writePush('pointer', 0)
-                }
+
                 vm.writeCall(funcName, nArgs)
+
                 funcName = ''
                 nArgs = 0
+                isMethod = false
+                variableOfCall = ''
             } else if (val == '(') {
                 isMethod = true
                 funcName = this.class + '.' + tempName
@@ -1064,8 +1040,11 @@ CompilationEngine.prototype = {
                     vm.writePush('pointer', 0)
                 }
                 vm.writeCall(funcName, nArgs)
+
                 funcName = ''
                 nArgs = 0
+                isMethod = false
+                variableOfCall = ''
             } else {
                 this.i--
             }
@@ -1078,6 +1057,17 @@ CompilationEngine.prototype = {
         let temp
         if (val == '(') {
             this.output += `<${key}> ${val} </${key}>\r\n`
+            // 如果是方法根据是变量.xxx或类.xxx来传入第一个参数
+            if (isMethod) {
+                nArgs++
+                if (variableOfCall) {
+                    this._writeVariable(variableOfCall)
+                    variableOfCall = ''
+                } else {
+                    vm.writePush('pointer', 0)
+                }
+            }
+
             this._compileExpressionList()
             temp = this._getNextToken()
             key = temp[0]
@@ -1105,6 +1095,18 @@ CompilationEngine.prototype = {
                 val = temp[1]
                 if (val == '(') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
+
+                    // 如果是方法根据是变量.xxx或类.xxx来传入第一个参数
+                    if (isMethod) {
+                        nArgs++
+                        if (variableOfCall) {
+                            this._writeVariable(variableOfCall)
+                            variableOfCall = ''
+                        } else {
+                            vm.writePush('pointer', 0)
+                        }
+                    }
+
                     this._compileExpressionList()
                     temp = this._getNextToken()
                     key = temp[0]
