@@ -19,20 +19,23 @@ let double = false
 let isCtr = false
 // 是否方法
 let isMethod = false
+// 调用方法的变量
+let variableOfCall = ''
 
-const ifTrueLabel = 'IF_TRUE_'
-const ifFalseLabel = 'IF_FALSE_'
+const ifTrueLabel = 'IF_TRUE'
+const ifFalseLabel = 'IF_FALSE'
+const ifEndLabel = 'IF_END'
 
-const whileLabel = 'WHILE_EXP_'
-const whileEndLabel = 'WHILE_END_'
+const whileLabel = 'WHILE_EXP'
+const whileEndLabel = 'WHILE_END'
 
 // if
-let ifIndex = -1
+let ifIndex = 0
 // while
-let whileIndex = -1
+let whileIndex = 0
 
 let opArry = []
-const opObj= {
+const opObj = {
     '+': 'add',
     '-': 'sub',
     '&amp;': 'and',
@@ -456,7 +459,12 @@ CompilationEngine.prototype = {
                     this._compileDo(key, val)
                     if (isMethod) {
                         nArgs++
-                        vm.writePush('pointer', 0)
+                        if (variableOfCall) {
+                            this._writeVariable(variableOfCall)
+                            variableOfCall = ''
+                        } else {
+                            vm.writePush('pointer', 0)
+                        }
                     }
                     vm.writeCall(funcName, nArgs)
                     vm.writePop('temp', 0)
@@ -499,6 +507,7 @@ CompilationEngine.prototype = {
             if (funcTempArry[1]) {
                 isMethod = true
                 funcName += funcTempArry[0]
+                variableOfCall = val
             } else {
                 funcName += val
             }
@@ -608,7 +617,8 @@ CompilationEngine.prototype = {
 
     _compileWhile(key, val) {
         let temp
-        whileIndex++
+        let tempIndex = whileIndex++
+        
         this.output += '<whileStatement>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
@@ -616,12 +626,12 @@ CompilationEngine.prototype = {
         key = temp[0]
         val = temp[1]
 
-        vm.writeLabel(whileLabel + whileIndex)
+        vm.writeLabel(whileLabel + tempIndex)
         if (val == '(') {
             this.output += `<${key}> ${val} </${key}>\r\n`
             this._compileExpression()
             vm.writeArithmetic('not')
-            vm.writeIf(whileEndLabel + whileIndex)
+            vm.writeIf(whileEndLabel + tempIndex)
 
             temp = this._getNextToken()
             key = temp[0]
@@ -647,8 +657,8 @@ CompilationEngine.prototype = {
                     key = temp[0]
                     val = temp[1]
 
-                    vm.writeGoto(whileLabel + whileIndex)
-                    vm.writeLabel(whileEndLabel + whileIndex)
+                    vm.writeGoto(whileLabel + tempIndex)
+                    vm.writeLabel(whileEndLabel + tempIndex)
 
                     if (val == '}') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
@@ -669,7 +679,8 @@ CompilationEngine.prototype = {
 
     _compileIf(key, val) {
         let temp
-        
+        let tempIndex = ifIndex++
+
         this.output += '<ifStatement>\r\n'
                      + `<${key}> ${val} </${key}>\r\n`
 
@@ -692,9 +703,8 @@ CompilationEngine.prototype = {
                 key = temp[0]
                 val = temp[1]
 
-                ifIndex++
-                vm.writeIf(ifTrueLabel + ifIndex)
-                vm.writeGoto(ifFalseLabel + ifIndex)
+                vm.writeIf(ifTrueLabel + tempIndex)
+                vm.writeGoto(ifFalseLabel + tempIndex)
 
                 if (val == '{') {
                     this.output += `<${key}> ${val} </${key}>\r\n`
@@ -704,7 +714,7 @@ CompilationEngine.prototype = {
                     val = temp[1] 
                     line = temp[2]
 
-                    vm.writeLabel(ifTrueLabel + ifIndex)
+                    vm.writeLabel(ifTrueLabel + tempIndex)
 
                     this._compileStatements(key, val, line)
 
@@ -712,7 +722,6 @@ CompilationEngine.prototype = {
                     key = temp[0]
                     val = temp[1] 
 
-                    vm.writeLabel(ifFalseLabel + ifIndex)
                     if (val == '}') {
                         this.output += `<${key}> ${val} </${key}>\r\n`
 
@@ -720,8 +729,12 @@ CompilationEngine.prototype = {
                         key = temp[0]
                         val = temp[1] 
                         if (val == 'else') {
+                            vm.writeGoto(ifEndLabel + tempIndex)
+                            vm.writeLabel(ifFalseLabel + tempIndex)
                             this._compileElse(key, val)
+                            vm.writeLabel(ifEndLabel + tempIndex)
                         } else {
+                            vm.writeLabel(ifFalseLabel + tempIndex)
                             this.i--
                         }
                     } else {
@@ -786,7 +799,8 @@ CompilationEngine.prototype = {
             this.output += `<${key}> ${val} </${key}>\r\n`
         } else if (val == 'this') {
             vm.writePush('pointer', 0)
-            this.output += `<${key}> ${val} </${key}>\r\n`
+            this.i--
+            this._compileExpression()
 
             temp = this._getNextToken()
             key = temp[0]
@@ -836,17 +850,19 @@ CompilationEngine.prototype = {
                 let nextKey = Object.keys(nextObj)[0]
                 let nextVal = nextObj[nextKey]
 
-                if (nextVal != '.') {
+                if (nextVal != '.' && nextVal != '[') {
                     this._writeVariable(val)
                     let preObj = this.tokens[this.i - 1]
                     let preKey = Object.keys(preObj)[0]
                     let preVal = preObj[preKey]
 
-                    if (opArry.length && nextVal != '[' && nextVal != ']' && preVal != '(') {
+                    if (opArry.length && opObj[preVal] !== undefined) {
                         vm.writeArithmetic(opArry.pop())
                     }
                 } else {
-                    funcName += val
+                    if (nextVal != '[') {
+                        funcName += val
+                    }
                 }
 
                 this._compileTerm(key, val)
@@ -862,9 +878,6 @@ CompilationEngine.prototype = {
                         break
                 }
                 this._compileTerm(key, val)
-                if (opArry.length) {
-                    vm.writeArithmetic(opArry.pop())
-                }
             } else if (key == 'integerConstant' || key == 'stringConstant') {
                 if (key == 'integerConstant') {
                     vm.writePush('constant', val)
@@ -872,7 +885,7 @@ CompilationEngine.prototype = {
                     let preKey = Object.keys(preObj)[0]
                     let preVal = preObj[preKey]
 
-                    if (opArry.length && preVal != '(') {
+                    if (opArry.length && opObj[preVal] !== undefined) {
                         vm.writeArithmetic(opArry.pop())
                     }
                 } else {
@@ -889,7 +902,7 @@ CompilationEngine.prototype = {
                     })
                 }
                 
-                this._compileTerm(key, val)
+                this._compileTerm(key, val, true)
             } else if (val == '-' || val == '~') { 
                 let preObj = this.tokens[this.i - 1]
                 let preKey = Object.keys(preObj)[0]
@@ -911,11 +924,12 @@ CompilationEngine.prototype = {
                         vm.writeArithmetic('not')
                     }
                 }
-            } else if (val == 'this') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-                vm.writePush('pointer', 0)
             } else {
                 switch (val) {
+                    case 'this':
+                        vm.writePush('pointer', 0)
+                        this._compileTerm(key, val)
+                        break
                     case '(':
                         this._compileTerm(key, val)
                         break
@@ -932,25 +946,33 @@ CompilationEngine.prototype = {
             val = temp[1]
 
             if (val == ')' || val == ';' || val == ']' || val == ',') {
-                this.i--
-
                 if (val == ')') {
-                    if (!double) {
+                    let nextObj = this.tokens[this.i + 1]
+                    let nextKey = Object.keys(nextObj)[0]
+                    let nextVal = nextObj[nextKey]
+
+                    if (nextVal == ')') {
+                        if (double) {
+                            if (opArry.length) {
+                                vm.writeArithmetic(opArry.pop())
+                            }
+                            double = false
+                        }
+                    } else {
                         if (opArry.length) {
                             vm.writeArithmetic(opArry.pop())
-                        }  
-                    } else {
-                        double = false
+                        }
                     }
                 }
+                this.i--
                 break
             }
         }
 
         this.output += '</expression>\r\n'
     },
-
-    _compileTerm(key, val) {
+    // flag表示整数是否已经被处理过
+    _compileTerm(key, val, flag) {
         let temp
         // 临时函数名
         let tempName
@@ -958,11 +980,11 @@ CompilationEngine.prototype = {
         this.output += '<term>\r\n'
                      
         if (val == '(') {
-            let preObj = this.tokens[this.i - 1]
-            let preKey = Object.keys(preObj)[0]
-            let preVal = preObj[preKey]
+            let nextObj = this.tokens[this.i + 1]
+            let nextKey = Object.keys(nextObj)[0]
+            let nextVal = nextObj[nextKey]
 
-            if (preVal == '(') {
+            if (nextVal == '(') {
                 double = true
             }
 
@@ -986,6 +1008,12 @@ CompilationEngine.prototype = {
             if (val != ')' && val != ']') {
                 this._compileTerm(key, val)
             } 
+        } else if (key == 'integerConstant') {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+            // 如果整数没有被处理过
+            if (!flag) {
+                vm.writePush('constant', val)
+            }
         } else {
             this.output += `<${key}> ${val} </${key}>\r\n`
 
@@ -1003,10 +1031,16 @@ CompilationEngine.prototype = {
                 
                 if (val == ']') {                       
                     this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._writeVariable(tempName)
                     vm.writeArithmetic('add')
                     vm.writePop('pointer', 1)
                     vm.writePush('that', 0)
-                    if (opArry.length) {
+
+                    let nextObj = this.tokens[this.i + 1]
+                    let nextKey = Object.keys(nextObj)[0]
+                    let nextVal = nextObj[nextKey]
+
+                    if (opArry.length && nextVal != ')') {
                         vm.writeArithmetic(opArry.pop())
                     }
                 } else {
