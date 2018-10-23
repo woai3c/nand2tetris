@@ -1,4 +1,15 @@
 const fs = require('fs')
+const opObj = {
+    '+': 'add',
+    '-': 'sub',
+    '&amp;': 'and',
+    '|': 'or',
+    '&lt;': 'lt',
+    '&gt;': 'gt',
+    '=': 'eq',
+    '/': 'call Math.divide 2',
+    '*': 'call Math.multiply 2'
+}
 
 function CompilationEngine(tokens, fileName) {
     this.outputPath = fileName + '.xml'
@@ -622,52 +633,20 @@ CompilationEngine.prototype = {
     },
 
     _compileExpression() {
-        let key, val, temp, line
-
         this.output += '<expression>\r\n'
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1] 
-        line = temp[2]
+        this._compileTerm()
 
-        if (val == ',') {
-            let error = 'line:' + line + ' The expression should not begin with a ,'
-                      + '\r\nat ' + this.rawFile
-            throw error
-        }
+        let key, val, temp, op
 
         while (true) {
-            if (key == 'identifier' || key == 'integerConstant' || key == 'stringConstant') {
-                this._compileTerm(key, val)
-            } else if (val == '-' || val == '~') {
-                let preObj = this.tokens[this.i - 1]
-                let preKey = Object.keys(preObj)[0]
-                let preVal = preObj[key]
-                
-                if (preKey == 'identifier' || preVal == ')') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                } else {
-                    this._compileTerm(key, val)
-                }
-            } else {
-                switch (val) {
-                    case 'true':
-                    case 'false':
-                    case 'null':
-                    case 'this':
-                    case '(':
-                        this._compileTerm(key, val)
-                        break
-                    default:
-                        this.output += `<${key}> ${val} </${key}>\r\n`
-                }
-            }
-
             temp = this._getNextToken()
             key = temp[0]
-            val = temp[1]
+            val = temp[1] 
 
-            if (val == ')' || val == ';' || val == ']' || val == ',') {
+            if (opObj[val] !== undefined) {
+                this.output += `<${key}> ${val} </${key}>\r\n`
+                this._compileTerm()
+            } else {
                 this.i--
                 break
             }
@@ -676,54 +655,82 @@ CompilationEngine.prototype = {
         this.output += '</expression>\r\n'
     },
 
-    _compileTerm(key, val) {
-        let temp
-        
+    _compileTerm() {
+         let key, val, temp
         this.output += '<term>\r\n'
-                     
-        if (val == '(') {
+
+        temp = this._getNextToken()
+        key = temp[0]
+        val = temp[1] 
+        
+        if (key == 'identifier') {
             this.output += `<${key}> ${val} </${key}>\r\n`
-            this._compileExpression()
 
             temp = this._getNextToken()
             key = temp[0]
-            val = temp[1]
-            if (val == ')') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-            } else {
-                this._error(key, val , ')')
-            }
-        } else if (val == '-' || val == '~') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
+            val = temp[1] 
 
-            if (val != ')' && val != ']') {
-                this._compileTerm(key, val)
-            } 
-        } else {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == '[') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-                this._compileExpression()
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-                
-                if (val == ']') {                       
+            switch (val) {
+                case '(':
+                case '.':
+                    this._compilePartOfCall(key, val)
+                    break
+                case '[':
                     this.output += `<${key}> ${val} </${key}>\r\n`
-                } else {
-                    this._error(key, val, ']')
-                }
-            } else if (val == '.' || val == '(') {
-                this._compilePartOfCall(key, val)
-            } else {
-                this.i--
+                    this._compileExpression()
+                    temp = this._getNextToken()
+                    key = temp[0]
+                    val = temp[1]
+                    
+                    if (val == ']') {                       
+                        this.output += `<${key}> ${val} </${key}>\r\n`
+                    } else {
+                        this._error(key, val, ']')
+                    }
+                    break
+                default:
+                    this.i--
+            }
+        } else if (key == 'integerConstant') {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+        } else if (key == 'stringConstant') {
+            this.output += `<${key}> ${val} </${key}>\r\n`
+        } else {
+            switch (val) {
+                case '(':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._compileExpression()
+
+                    temp = this._getNextToken()
+                    key = temp[0]
+                    val = temp[1] 
+
+                    if (val == ')') {
+                        this.output += `<${key}> ${val} </${key}>\r\n`
+                    } else {
+                        this._error(key, val, ')')
+                    }
+                    break
+                case '-':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._compileTerm()
+                    break
+                case '~':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._compileTerm()
+                    break
+                case 'null':
+                case 'false':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    break
+                case 'true':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    break
+                case 'this':
+                    this.output += `<${key}> ${val} </${key}>\r\n`
+                    break
+                default:
+                    this._error(key, val, 'Unknown symbol')
             }
         }
 
