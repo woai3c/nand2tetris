@@ -32,8 +32,6 @@ const whileEndLabel = 'WHILE_END'
 let ifIndex = 0
 // while
 let whileIndex = 0
-
-let opArry = []
 const opObj = {
     '+': 'add',
     '-': 'sub',
@@ -42,7 +40,6 @@ const opObj = {
     '&lt;': 'lt',
     '&gt;': 'gt',
     '=': 'eq',
-    '~': 'not',
     '/': 'call Math.divide 2',
     '*': 'call Math.multiply 2'
 }
@@ -55,7 +52,12 @@ function CompilationEngine(tokens, fileName) {
     this.rawFile = fileName + '.jack'
     this.tokens = tokens
     this.len = tokens.length
-    this.output = ''
+    // 当前key
+    this.key = ''
+    // 当前val
+    this.val = ''
+    // 当前line
+    this.line = 0
     // index
     this.i = -1
 
@@ -74,54 +76,35 @@ CompilationEngine.prototype = {
 
     _compileClass() {
         const tokens = this.tokens
-        let key, val, temp
-        
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
+        this._getNextToken()
 
-        if (val == 'class') {
-            this.output += '<class>\r\n'
-            this.output += `<${key}> ${val} </${key}>\r\n`
+        if (this.val == 'class') {
+            this._getNextToken()
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
+            if (this.key == 'identifier') {
+                this.class = this.val
+                this._getNextToken()
 
-            if (key == 'identifier') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-                this.class = val
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
-                if (val == '{') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-
+                if (this.val == '{') {
                     while (this.i < this.len) {
-                        let line
-                        temp = this._getNextToken()
-                        key = temp[0]
-                        val = temp[1]
-                        line = temp[2]
+                        this._getNextToken()
 
-                        if (val == '}') {
-                            this.output += `<${key}> ${val} </${key}>\r\n`
+                        if (this.val == '}') {
                             break
                         }
 
-                        switch (val) {
+                        switch (this.val) {
                             case 'static':
                             case 'field':
-                                this._compileClassVarDec(key, val)
+                                this._compileClassVarDec()
                                 break
                             case 'constructor':
                             case 'function':
                             case 'method':
-                                if (val == 'constructor') {
+                                if (this.val == 'constructor') {
                                     isCtr = true
                                     isMethod = false
-                                } else if (val == 'method') {
+                                } else if (this.val == 'method') {
                                     isCtr = false
                                     isMethod = true
                                 } else {
@@ -132,160 +115,106 @@ CompilationEngine.prototype = {
                                 subTable.startSubroutine()
                                 funcName = ''
                                 localNum = 0
-                                this._compileSubroutine(key, val)
+                                this._compileSubroutine()
                                 break
                             default:
-                                this._error(key, val, 'static | field | constructor | function | method')
+                                this._error('static | field | constructor | function | method')
                         }
                     }
                 } else {
-                    this._error(key, val, '{')
+                    this._error('{')
                 }
             } else {
-                this._error(key, val, 'identifier')
+                this._error('identifier')
             }
 
-            this.output += '</class>\r\n'
-            this.createXMLFile()
         } else {
-            this._error(key, val, 'class')
+            this._error('class')
         }
     },
 
-    _compileClassVarDec(key, val) {
+    _compileClassVarDec() {
         // type, kind 变量的类型和种类
-        let temp, type, kind
-        kind = val
-        this.output += '<classVarDec>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
+        let type, kind
+        kind = this.val
 
-        
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-        if (key == 'keyword' || key == 'identifier') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
+        this._getNextToken()
 
-            type = val
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
+        if (this.key == 'keyword' || this.key == 'identifier') {
+            type = this.val
+            this._getNextToken()
 
-            if (key !== 'identifier') {
-                this._error(key, val, 'identifier')
+            if (this.key !== 'identifier') {
+                this._error('identifier')
             }
 
-            while (key == 'identifier') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
+            while (this.key == 'identifier') {
                 // 符号表收集变量的各个参数
-                mainTable.define(val, type, kind)
+                mainTable.define(this.val, type, kind)
+                this._getNextToken()
 
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
-                if (val == ';') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
+                if (this.val == ';') {
                     break
-                } else if (val == ',') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
+                } else if (this.val == ',') {
+                    this._getNextToken()
                 } else {
-                    this._error(key, val, ',|;')
+                    this._error(', | ;')
                 }
             } 
         } else {
-            this._error(key, val, 'keyword')
+            this._error('keyword | identifier')
         }
-
-        this.output += '</classVarDec>\r\n'
     },
 
-    _compileSubroutine(key, val) {
-        let temp
-
-        this.output += '<subroutineDec>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-        if (key == 'identifier' || key == 'keyword') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-
+    _compileSubroutine() {
+        this._getNextToken()
+        if (this.key == 'identifier' || this.key == 'keyword') {
             if (isCtr) {
-                funcName += val
+                funcName += this.val
             }
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (key == 'identifier') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-
+            this._getNextToken()
+            if (this.key == 'identifier') {
                 if (isCtr) {
-                    funcName += '.' + val
+                    funcName += '.' + this.val
                 } else {
                     // 函数名
-                    funcName = this.class + '.' + val
+                    funcName = this.class + '.' + this.val
                 }
 
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
+                this._getNextToken()
             } else {
-                this._error(key, val, 'identifier')
+                this._error('identifier')
             }
         } else {
-            this._error(key, val, 'identifier | keyword')
+            this._error('identifier | keyword')
         }
 
-        if (val == '(') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
+        if (this.val == '(') {
             this._compileParameterList()
+            this._getNextToken()
+            if (this.val == ')') {
+                this._getNextToken()
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-            if (val == ')') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
-                if (val == '{') {
-                    this._compileSubroutineBody(key, val)
+                if (this.val == '{') {
+                    this._compileSubroutineBody(this.key, this.val)
                 } else {
-                    this._error(key, val, '{')
+                    this._error('{')
                 }
             } else {
-                this._error(key, val, ')')
+                this._error(')')
             }
         } else {
-            this._error(key, val, '(')
+            this._error('(')
         }
-
-        this.output += '</subroutineDec>\r\n'
     },
 
-    _compileSubroutineBody(key, val) {
-        let temp, line
-        
-        this.output += '<subroutineBody>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-        line = temp[2]
+    _compileSubroutineBody() {
+        this._getNextToken()
 
         while (true) {
-            if (val == 'var') {
-                this._compileVarDec(key, val)
+            if (this.val == 'var') {
+                this._compileVarDec()
             } else {
                 vm.writeFunction(funcName, localNum)
                 if (isCtr) {
@@ -304,19 +233,15 @@ CompilationEngine.prototype = {
                 isMethod = false
                 funcName = ''
                 localNum = 0
-                this._compileStatements(key, val, line)
+                this._compileStatements()
             }
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-            line = temp[2]
+            this._getNextToken()
 
-            if (val == '}') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
+            if (this.val == '}') {
                 break
             } else {
-                switch (val) {
+                switch (this.val) {
                     case 'if':
                     case 'while':
                     case 'do':
@@ -325,140 +250,97 @@ CompilationEngine.prototype = {
                     case 'var':
                         break
                     default:
-                        this._error(key, val, '}')
+                        this._error('}')
                 }
             }
         }
-        
-        this.output += '</subroutineBody>\r\n'
     },
 
     _compileParameterList() {
-        let key, val, temp, type
+        let type
+        this._getNextToken()
 
-        this.output += '<parameterList>\r\n'
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
-        if (val !== ')') {
-            if (key !== 'keyword' && key !== 'identifier') {
-                this._error(key, val, 'keyword | identifier')
+        if (this.val !== ')') {
+            if (this.key !== 'keyword' && this.key !== 'identifier') {
+                this._error('keyword | identifier')
             } else {
                 if (isMethod) {
                     subTable.define('this', 'object', 'argument')
                 }
-                while (key == 'keyword' || key == 'identifier') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
+                while (this.key == 'keyword' || this.key == 'identifier') {
                     // 类型
-                    type = val
+                    type = this.val
 
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
-                    if (key == 'identifier') {
-                        this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._getNextToken()
+                    if (this.key == 'identifier') {
                         // 种类
-                        subTable.define(val, type, 'argument')
+                        subTable.define(this.val, type, 'argument')
 
-                        temp = this._getNextToken()
-                        key = temp[0]
-                        val = temp[1]
-                        if (val == ',') {
-                            this.output += `<${key}> ${val} </${key}>\r\n`
-                            temp = this._getNextToken()
-                            key = temp[0]
-                            val = temp[1]
+                        this._getNextToken()
+                        if (this.val == ',') {
+                            this._getNextToken()
                         }
                     } else {
-                        this._error(key, val, 'identifier')
+                        this._error('identifier')
                     }
                 }
             }
         }
-        
-        this.output += '</parameterList>\r\n'
         this.i--
     },
 
-    _compileVarDec(key, val) {
-        let temp, type
+    _compileVarDec() {
+        let type
         
-        this.output += '<varDec>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
-        if (key == 'keyword' || key == 'identifier') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
+        this._getNextToken()
+        if (this.key == 'keyword' || this.key == 'identifier') {
             // 类型
-            type = val
+            type = this.val
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (key !== 'identifier') {
-                this._error(key, val, 'identifier')
+            this._getNextToken()
+            if (this.key !== 'identifier') {
+                this._error('identifier')
             }
 
-            while (key == 'identifier') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-
+            while (this.key == 'identifier') {
                 // 定义局部变量
-                subTable.define(val, type, 'local')
+                subTable.define(this.val, type, 'local')
                 // 局部变量个数+1
                 localNum++
 
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
-                if (val == ',') {
-                   this.output += `<${key}> ${val} </${key}>\r\n`
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1] 
-                } else if (val == ';') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
+                this._getNextToken()
+                if (this.val == ',') {
+                    this._getNextToken()
+                } else if (this.val == ';') {
                     break
                 } else {
-                    this._error(key, val, ', | ;')
+                    this._error(', | ;')
                 }
             }
         } else {
-            this._error(key, val, 'keyword | identifier')
+            this._error('keyword | identifier')
         }
 
-        this.output += '</varDec>\r\n'
+        this._getNextToken()
 
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
-        if (val == 'var') {
-            this._compileVarDec(key, val)
+        if (this.val == 'var') {
+            this._compileVarDec(this.key, this.val)
         } else {
             this.i--
         }
     },
 
-    _compileStatements(key, val, line) {
-        let temp
-        
-        this.output += '<statements>\r\n'
-
-        while (val !== '}') {
-            switch (val) {
+    _compileStatements() {
+        while (this.val !== '}') {
+            switch (this.val) {
                 case 'if':
-                    this._compileIf(key, val)
+                    this._compileIf()
                     break
                 case 'while':
-                    this._compileWhile(key, val)
+                    this._compileWhile()
                     break
                 case 'do':
-                    this._compileDo(key, val)
+                    this._compileDo()
 
                     vm.writeCall(funcName, nArgs)
                     vm.writePop('temp', 0)
@@ -469,113 +351,72 @@ CompilationEngine.prototype = {
                     variableOfCall = ''
                     break
                 case 'return':
-                    this._compileReturn(key, val)
+                    this._compileReturn()
                     break
                 case 'let':
-                    this._compileLet(key, val)
+                    this._compileLet()
                     break
                 default:
-                    this._error(key, val, 'if | while | do | return | let')
+                    this._error('if | while | do | return | let')
             }
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1] 
-            line = temp[2]
+            this._getNextToken()
         }
         this.i--
-        this.output += '</statements>\r\n'
     },
 
-    _compileDo(key, val) {
-        let temp
+    _compileDo() {
         let funcTempArry 
 
-        this.output += '<doStatement>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1] 
-
-        if (key == 'identifier') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            funcTempArry = this._getTypeOfVariable(val)
-
+        this._getNextToken()
+        if (this.key == 'identifier') {
+            // 变量or类
+            funcTempArry = this._getTypeOfVariable(this.val)
             if (funcTempArry[1]) {
                 isMethod = true
                 funcName += funcTempArry[0]
-                variableOfCall = val
+                variableOfCall = this.val
             } else {
-                funcName += val
+                funcName += this.val
             }
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == '.') {
-                this._compilePartOfCall(key, val)
-            } else if (val == '(') {
+            this._getNextToken()
+            if (this.val == '.') {
+                this._compilePartOfCall()
+            } else if (this.val == '(') {
                 isMethod = true
                 funcName = this.class + '.' + funcName
-                this._compilePartOfCall(key, val)
+                this._compilePartOfCall()
             } else {
-                this._error(key, val, '. | )')
+                this._error('. | )')
             }
             
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-            if (val == ';') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-            } else {
-                this._error(key, val, ';')
-            }  
+            this._getNextToken()
+            if (this.val != ';') {
+                this._error(';')
+            }
         } else {
-            this._error(key, val, 'identifier')
+            this._error('identifier')
         }
-        this.output += '</doStatement>\r\n'
     },
 
-    _compileLet(key, val) {
-        let temp
+    _compileLet() {
         let variable = ''
-        this.output += '<letStatement>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
 
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1] 
+        this._getNextToken()
+        if (this.key == 'identifier') {
+            variable += this.val
 
-        if (key == 'identifier') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            variable += val
-
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == '[') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-
+            this._getNextToken()
+            if (this.val == '[') {
                 this._compileExpression()
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
-                if (val == ']') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
-
+                this._getNextToken()
+                if (this.val == ']') {
+                    this._getNextToken()
                     this._writeVariable(variable)
                     vm.writeArithmetic('add')
-                    if (val == '=') {
-                        this.output += `<${key}> ${val} </${key}>\r\n`
+                    if (this.val == '=') {
                         this._compileExpression()
 
                         vm.writePop('temp', 0)
@@ -583,293 +424,174 @@ CompilationEngine.prototype = {
                         vm.writePush('temp', 0)
                         vm.writePop('that', 0)
                     } else {
-                        this._error(key, val, '=')
+                        this._error('=')
                     }
                 } else {
-                    this._error(key, val, ']')
+                    this._error(']')
                 }
-            } else if (val == '=') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
+            } else if (this.val == '=') {
                 this._compileExpression()
                 // pop
-
                 this._writeVariable(variable, true)
             } else {
-                this._error(key, val, '[ | =')
+                this._error('[ | =')
             }
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == ';') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-            } else {
-                this._error(key, val, ';')
+            this._getNextToken()
+            if (this.val != ';') {
+                this._error(';')
             }
         } else {
-            this._error(key, val, 'identifier')
+            this._error('identifier')
         }
-        this.output += '</letStatement>\r\n'
     },
 
-    _compileWhile(key, val) {
-        let temp
+    _compileWhile() {
         let tempIndex = whileIndex++
-        
-        this.output += '<whileStatement>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
 
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
+        this._getNextToken()
         vm.writeLabel(whileLabel + tempIndex)
-        if (val == '(') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
+        if (this.val == '(') {
             this._compileExpression()
             vm.writeArithmetic('not')
             vm.writeIf(whileEndLabel + tempIndex)
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == ')') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-                line = temp[2]
-
-                if (val == '{') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                    
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
-                    line = temp[2]
-                    this._compileStatements(key, val, line)
-
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
-
+            this._getNextToken()
+            if (this.val == ')') {
+                this._getNextToken()
+                if (this.val == '{') {            
+                    this._getNextToken()
+                    this._compileStatements()
+                    this._getNextToken()
                     vm.writeGoto(whileLabel + tempIndex)
                     vm.writeLabel(whileEndLabel + tempIndex)
 
-                    if (val == '}') {
-                        this.output += `<${key}> ${val} </${key}>\r\n`
-                    } else {
-                        this._error(key, val, '}')
+                    if (this.val != '}') {
+                        this._error('}')
                     }
                 } else {
-                    this._error(key, val, '{')
+                    this._error('{')
                 }
             } else {
-                this._error(key, val, ')')
+                this._error(')')
             }
         } else {
-            this._error(key, val, '(')
+            this._error('(')
         }
-        this.output += '</whileStatement>\r\n'
     },
 
-    _compileIf(key, val) {
-        let temp
+    _compileIf() {
         let tempIndex = ifIndex++
-
-        this.output += '<ifStatement>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1] 
-
-        if (val == '(') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
+        this._getNextToken()
+        if (this.val == '(') {
             this._compileExpression()
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == ')') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
+            this._getNextToken()
+            if (this.val == ')') {
+                this._getNextToken()
                 vm.writeIf(ifTrueLabel + tempIndex)
                 vm.writeGoto(ifFalseLabel + tempIndex)
 
-                if (val == '{') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                    temp = this._getNextToken()
-                    let line
-                    key = temp[0]
-                    val = temp[1] 
-                    line = temp[2]
-
+                if (this.val == '{') {
+                    this._getNextToken()
                     vm.writeLabel(ifTrueLabel + tempIndex)
-
-                    this._compileStatements(key, val, line)
-
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1] 
-
-                    if (val == '}') {
-                        this.output += `<${key}> ${val} </${key}>\r\n`
-
-                        temp = this._getNextToken()
-                        key = temp[0]
-                        val = temp[1] 
-                        if (val == 'else') {
+                    this._compileStatements()
+                    this._getNextToken()
+                    if (this.val == '}') {
+                        this._getNextToken()
+                        if (this.val == 'else') {
                             vm.writeGoto(ifEndLabel + tempIndex)
                             vm.writeLabel(ifFalseLabel + tempIndex)
-                            this._compileElse(key, val)
+                            this._compileElse()
                             vm.writeLabel(ifEndLabel + tempIndex)
                         } else {
                             vm.writeLabel(ifFalseLabel + tempIndex)
                             this.i--
                         }
                     } else {
-                        this._error(key, val, '}')
+                        this._error('}')
                     }
                 } else {
-                    this._error(key, val, ')')
+                    this._error(')')
                 }
             } else {
-                this._error(key, val, ')')
+                this._error(')')
             }
         } else {
-            this._error(key, val, '(')
+            this._error('(')
         }
-
-        this.output += '</ifStatement>\r\n'
     },  
 
-    _compileElse(key, val) {
-        let temp, line
-        this.output += `<${key}> ${val} </${key}>\r\n`
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
-        if (val == '{') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-            line = temp[2]
-            this._compileStatements(key, val, line)
-
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == '}') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-            } else {
-                this._error(key, val, '}')
+    _compileElse() {
+        this._getNextToken()
+        if (this.val == '{') {
+            this._getNextToken()
+            this._compileStatements()
+            this._getNextToken()
+            if (this.val != '}') {
+                this._error('}')
             }
         } else {
-            this._error(key, val, '{')
+            this._error('{')
         }
     },
 
-    _compileReturn(key, val) {
-        let temp
-        
-        this.output += '<returnStatement>\r\n'
-                     + `<${key}> ${val} </${key}>\r\n`
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
-        if (val == ';') {
+    _compileReturn() {
+        this._getNextToken()
+        if (this.val == ';') {
             vm.writePush('constant', 0)
             vm.writeReturn()
-            this.output += `<${key}> ${val} </${key}>\r\n`
-        } else if (val == 'this') {
+        } else if (this.val == 'this') {
             this.i--
             this._compileExpression()
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-            if (val == ';') {
+            this._getNextToken()
+            if (this.val == ';') {
                 vm.writeReturn()
-                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
-                this._error(key, val, ';')
+                this._error(';')
             }
         } else {
             this.i--
             this._compileExpression()
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (val == ';') {
+            this._getNextToken()
+            if (this.val == ';') {
                 vm.writeReturn()
-                this.output += `<${key}> ${val} </${key}>\r\n`
             } else {
-                this._error(key, val, ';')
+                this._error(';')
             }
         }
-        
-        this.output += '</returnStatement>\r\n'
     },
 
     _compileExpression() {
-        this.output += '<expression>\r\n'
-
         this._compileTerm()
+        let op
 
-        let key, val, temp, op
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1] 
-
-        if (opObj[val] !== undefined) {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            op = opObj[val]
-
-            this._compileTerm()
-            vm.writeArithmetic(op)
-        } else if (val == ';' || val == ',' || val == ')' || val == ']') {
-            this.i--
+        while (true) {
+            this._getNextToken()
+            if (opObj[this.val] !== undefined) {
+                op = opObj[this.val]
+                this._compileTerm()
+                vm.writeArithmetic(op)
+            } else {
+                this.i--
+                break
+            }
         }
-
-        this.output += '</expression>\r\n'
     },
-    // flag表示整数是否已经被处理过
+
     _compileTerm() {
-        let key, val, temp, tempName
-        this.output += '<term>\r\n'
+        let tempName
 
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1] 
-        
-        if (key == 'identifier') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            tempName = val
-
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1] 
-
-            switch (val) {
+        this._getNextToken()
+        if (this.key == 'identifier') {
+            tempName = this.val
+            this._getNextToken()
+            switch (this.val) {
                 case '(':
                     isMethod = true
                     funcName = this.class + '.' + tempName
-                    this._compilePartOfCall(key, val)
+                    this._compilePartOfCall()
 
                     vm.writeCall(funcName, nArgs)
                     funcName = ''
@@ -887,7 +609,7 @@ CompilationEngine.prototype = {
                         funcName += tempName
                     }
 
-                    this._compilePartOfCall(key, val)
+                    this._compilePartOfCall()
 
                     vm.writeCall(funcName, nArgs)
                     funcName = ''
@@ -896,29 +618,52 @@ CompilationEngine.prototype = {
                     variableOfCall = ''
                     break
                 case '[':
-                    this.output += `<${key}> ${val} </${key}>\r\n`
                     this._compileExpression()
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
-                    
-                    if (val == ']') {                       
-                        this.output += `<${key}> ${val} </${key}>\r\n`
+                    this._getNextToken()              
+                    if (this.val == ']') {                       
                         this._writeVariable(tempName)
                         vm.writeArithmetic('add')
                         vm.writePop('pointer', 1)
                         vm.writePush('that', 0)
                     } else {
-                        this._error(key, val, ']')
+                        this._error(']')
                     }
                     break
                 default:
                     this.i--
                     this._writeVariable(tempName)
             }
-        } else if (val == 'null' || val == 'true' || val == 'false' || val == 'this') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            switch (val) {
+        } else if (this.key == 'integerConstant') {
+            vm.writePush('constant', this.val)
+        } else if (this.key == 'stringConstant') {
+            let strArry = [...this.val]
+            let length = strArry.length
+            let code
+
+            vm.writePush('constant', length)
+            vm.writeCall('String.new', 1)
+            strArry.forEach(s => {
+                code = s.charCodeAt()
+                vm.writePush('constant', code)
+                vm.writeCall('String.appendChar', 2)
+            })
+        } else {
+            switch (this.val) {
+                case '(':
+                    this._compileExpression()
+                    this._getNextToken()
+                    if (this.val != ')') {
+                        this._error(')')
+                    } 
+                    break
+                case '-':
+                    this._compileTerm()
+                    vm.writeArithmetic('neg')
+                    break
+                case '~':
+                    this._compileTerm()
+                    vm.writeArithmetic('not')
+                    break
                 case 'null':
                 case 'false':
                     vm.writePush('constant', 0)
@@ -931,68 +676,13 @@ CompilationEngine.prototype = {
                     vm.writePush('pointer', 0)
                     break
                 default:
-                    this._error(key, val, 'null | false | true | this')
+                    this._error('Unknown symbol')
             }
-        } else if (key == 'integerConstant' || key == 'stringConstant') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            if (key == 'integerConstant') {
-                vm.writePush('constant', val)
-            } else {
-                let strArry = [...val]
-                let length = strArry.length
-                let code
-
-                vm.writePush('constant', length)
-                vm.writeCall('String.new', 1)
-                strArry.forEach(s => {
-                    code = s.charCodeAt()
-                    vm.writePush('constant', code)
-                    vm.writeCall('String.appendChar', 2)
-                })
-            }
-        } else if (val == '-' || val == '~') { 
-            let preObj = this.tokens[this.i - 1]
-            let preKey = Object.keys(preObj)[0]
-            let preVal = preObj[preKey]
-
-            if (preKey == 'identifier' || preVal == ')' || preKey == 'integerConstant') {
-                // 正常的op
-                if (val == '-') {
-                    this.i--
-                } 
-            } else {
-                // 针对负数和取反操作
-                this._compileTerm()
-
-                if (val == '-') {
-                    vm.writeArithmetic('neg')
-                } else {
-                    vm.writeArithmetic('not')
-                }
-            }
-        } else if (val == '(') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            this._compileExpression()
-
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1] 
-
-            if (val == ')') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-            } else {
-                this._error(key, val, ')')
-            }
-
         }
-
-        this.output += '</term>\r\n'
     },
 
-    _compilePartOfCall(key, val) {
-        let temp
-        if (val == '(') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
+    _compilePartOfCall() {
+        if (this.val == '(') {
             // 如果是方法根据是变量.xxx或类.xxx来传入第一个参数
             if (isMethod) {
                 nArgs++
@@ -1005,33 +695,19 @@ CompilationEngine.prototype = {
             }
 
             this._compileExpressionList()
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
+            this._getNextToken()
+            if (this.val != ')') {
+                this._error(')')
+            } 
+        } else if (this.val == '.') {
+            funcName += this.val
 
-            if (val == ')') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-            } else {
-                this._error(key, val, ')')
-            }
-        } else if (val == '.') {
-            this.output += `<${key}> ${val} </${key}>\r\n`
-            funcName += val
+            this._getNextToken()
+            if (this.key == 'identifier') {
+                funcName += this.val
 
-            temp = this._getNextToken()
-            key = temp[0]
-            val = temp[1]
-
-            if (key == 'identifier') {
-                this.output += `<${key}> ${val} </${key}>\r\n`
-                funcName += val
-
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-                if (val == '(') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-
+                this._getNextToken()
+                if (this.val == '(') {
                     // 如果是方法根据是变量.xxx或类.xxx来传入第一个参数
                     if (isMethod) {
                         nArgs++
@@ -1044,14 +720,9 @@ CompilationEngine.prototype = {
                     }
 
                     this._compileExpressionList()
-                    temp = this._getNextToken()
-                    key = temp[0]
-                    val = temp[1]
-
-                    if (val == ')') {
-                        this.output += `<${key}> ${val} </${key}>\r\n`
-                    } else {
-                        this._error(key, val, ')')
+                    this._getNextToken()
+                    if (this.val != ')') {
+                        this._error(')')
                     }
                 } else {
                     this.error(key, val, '(')
@@ -1060,40 +731,26 @@ CompilationEngine.prototype = {
                 this.error(key, val, 'identifier')
             }
         } else {
-            this._error(key, val, '( | .')
+            this._error('( | .')
         }
     },
 
     _compileExpressionList() {
-        let key, val, temp
-
-        temp = this._getNextToken()
-        key = temp[0]
-        val = temp[1]
-
-        this.output += '<expressionList>\r\n'
-
-        if (val == ')' || val == ',') {
+        this._getNextToken()
+        if (this.val == ')' || this.val == ',') {
             this.i--
         } else {
             this.i--
             while (true) {
                 nArgs++
                 this._compileExpression()
-                temp = this._getNextToken()
-                key = temp[0]
-                val = temp[1]
-
-                if (val == ',') {
-                    this.output += `<${key}> ${val} </${key}>\r\n`
-                } else if (val == ')') {
+                this._getNextToken()
+                if (this.val == ')') {
                     this.i--
                     break
                 }
             }
         }
-
-        this.output += '</expressionList>\r\n'
     },
 
     createXMLFile() {
@@ -1106,11 +763,13 @@ CompilationEngine.prototype = {
         let key = Object.keys(obj)[0]
         let val = obj[key]
 
-        return [key, val, obj.line]
+        this.key = key
+        this.val = val
+        this.line = obj.line
     },
 
-    _error(key, val, type) {
-        let error = 'line:' + this.tokens[this.i].line + ' syntax error: {' + key + ': ' + val 
+    _error(type) {
+        let error = 'line:' + this.tokens[this.i].line + ' syntax error: {' + this.key + ': ' + this.val 
                   + '}\r\nExpect the type of key to be ' + type + '\r\nat ' + this.rawFile
         throw error
     },

@@ -64,8 +64,6 @@ JackTokenizer.prototype = {
                 this._lexicalAnalysis(str)
             }
         }
-
-        this.createXMLFile()
     },
 
     _hasMoreTokens(data) {
