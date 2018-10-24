@@ -26,67 +26,14 @@ class Sys {
     }
 
     /** Waits approximately duration milliseconds and returns.  */
-    // 电脑速度太快 太恶心了 差不多就行了
+    // 在我的电脑上times = 150 约为1毫秒 和电脑CPU有关
     function void wait(int duration) {
-        var int time, more1, more2, more3, more4, more5, more6, more7, more8, more9, more10, more11, more12, more13;
-        let time = 30000;
-        let more1 = 30000;
-        let more2 = 30000;
-        let more3 = 30000;
-        let more4 = 30000;
-        let more5 = 30000;
-        let more6 = 30000;
-        let more7 = 30000;
-        let more8 = 30000;
-        let more9 = 30000;
-        let more10 = 30000;
-        let more11 = 30000;
-        let more12 = 30000;
-        let more13 = 30000;
-
+        var int times;
         while (duration > 0) {
             let duration = duration - 1;
-            while (time > 0) {
-                let time = time - 1;
-                while (more1 > 0) {
-                    let more1 = more1 - 1;
-                    while (more2 > 0) {
-                        let more2 = more2 - 1;
-                        while (more3 > 0) {
-                            let more3 = more3 - 1;
-                            while (more4 > 0) {
-                                let more4 = more4 - 1;
-                                while (more5 > 0) {
-                                    let more5 = more5 - 1;
-                                    while (more6 > 0) {
-                                        let more6 = more6 - 1;
-                                        while (more7 > 0) {
-                                            let more7 = more7 - 1;
-                                            while (more8 > 0) {
-                                                let more8 = more8 - 1;
-                                                while (more9 > 0) {
-                                                    let more9 = more9 - 1;
-                                                    while (more10 > 0) {
-                                                        let more10 = more10 - 1;
-                                                        while (more11 > 0) {
-                                                            let more11 = more11 - 1;
-                                                            while (more12 > 0) {
-                                                                let more12 = more12 - 1;
-                                                                while (more13 > 0) {
-                                                                    let more13 = more13 - 1;
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            let times = 150;
+            while (times > 0) {
+                let times = times - 1;
             }
         }
         return;
