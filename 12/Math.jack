@@ -125,8 +125,4 @@ class Math {
     function int bit(int x, int j) {
         return ~((x & twoToThe[j]) = 0);
     }
-
-    function int mod(int a, int b){
-        return a - (Math.divide(a, b) * b);
-    }
 }

@@ -1,8 +1,3 @@
-// This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
-// by Nisan and Schocken, MIT Press.
-// File name: projects/12/String.jack
-
 /**
  * Represents character strings. In addition for constructing and disposing
  * strings, the class features methods for getting and setting individual
@@ -11,18 +6,24 @@
  * string-oriented operations.
  */
 class String {
-    filed int len;
+    field int len;
+    field int maxLen;
+    field Array chars;
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
-        let len = maxLength;
-        let this = Array.new(maxLength);
+        if (maxLength = 0) {
+            let maxLength = 1;
+        }
+        let len = 0;
+        let maxLen = maxLength;
+        let chars = Array.new(maxLength);
         return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
-        do Memory.deAlloc(this);
+        do chars.dispose();
         return;
     }
 
@@ -33,45 +34,48 @@ class String {
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
-        return this[k];
+        return chars[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
-        let this[j] = c;
+        let chars[j] = c;
         return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
-        let len = len + 1;
-        let this[len] = c;
+        if (maxLen > len) {
+            let chars[len] = c;
+            let len = len + 1;
+        }
         return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
-        let this[len] = 0;
-        let len = len - 1;
+        if (len > 0) {
+            let len = len - 1;
+        }
         return;
     }
 
     /** Returns the integer value of this string, 
      *  until a non-digit character is detected. */
-    method int intValue(String s) {
-        var int v, l, index, d, temp, isNeg;
+    method int intValue() {
+        var int v, index, d, temp;
+        var boolean isNeg;
         let v = 0;
-        let l = s.length();
         let index = 0;
 
-        if (s[index] = 45) {
+        if (chars[index] = 45) {
             let index = index + 1;
             let isNeg = true;
         } else {
             let isNeg = false;
         }
-        while (index < l) {
-            let temp = s[index];
+        while (index < len) {
+            let temp = chars[index];
             if ((temp < 48) | (temp > 57)) {
                 if (isNeg) {
                     return -v;
@@ -79,7 +83,7 @@ class String {
                     return v;
                 }
             }
-            let d = s[index] - 48;
+            let d = String.c2d(temp);
             let index = index + 1;
             let v = v * 10 + d;
         }
@@ -93,42 +97,50 @@ class String {
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int n) {
-        var int lastDigit;
-        var char c;
-        var String str;
-        var boolean isNeg;
+        let len = 0;
         if (n < 0) {
-            let isNeg = true;
             let n = -n;
-        } else {
-            let isNeg = false;
+            do appendChar(45);
+        } 
+
+        do setInt2(n);
+        return;
+    }
+
+    method void setInt2(int n) {
+        var int nextN;
+
+        if(n < 10){
+            do appendChar(String.d2c(n));
+        }else{
+            let nextN = n / 10;
+            do setInt2(nextN);
+            do appendChar(String.d2c(n - (nextN * 10)));
         }
 
-        let lastDigit = Math.mod(n, 10);
-        let c = lastDigit + 48;
-        if (n < 10) {
-            if (isNeg) {
-                let str = "-";
-                let str = str.appendChar(c);
-            } else {
-                let str = c;
-            }
-            return str;
-        } else {
-            return int2String(n / 10).appendChar(c);
-        }
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
-
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
+    }
+
+    function int c2d(char c) {
+        return c - 48;
+    }
+
+    function char d2c(int d) {
+        return d + 48;
     }
 }
