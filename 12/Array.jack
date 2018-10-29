@@ -1,8 +1,3 @@
-// This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
-// by Nisan and Schocken, MIT Press.
-// File name: projects/12/Array.jack
-
 /**
  * Represents an array.
  * In the Jack language, arrays are instances of the Array class.
