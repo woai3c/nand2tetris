@@ -61,7 +61,7 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
-        var int q, result;
+        var int q, result, sum;
         var boolean isPos;
 
         let isPos = ((x > 0) = (y > 0));
@@ -73,11 +73,12 @@ class Math {
         }
 
         let q = Math.divide(x, y + y);
+        let sum = q + q;
 
-        if ((x - (2 * q * y)) < y) {
-            let result = q + q;
+        if ((x - (sum * y)) < y) {
+            let result = sum;
         } else {
-            let result = q + q + 1;
+            let result = sum + 1;
         }
         if (isPos) {
             return result;
