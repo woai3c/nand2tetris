@@ -72,7 +72,12 @@ class Math {
             return 0;
         }
 
-        let q = Math.divide(x, y + y);
+        if (y < 16384) {
+            let q = Math.divide(x, y + y);
+        } else {
+            let q = 0;
+        }
+
         let sum = q + q;
 
         if ((x - (sum * y)) < y) {
@@ -125,5 +130,13 @@ class Math {
 
     function int bit(int x, int j) {
         return ~((x & twoToThe[j]) = 0);
+    }
+
+    function int mod(int a, int b) {
+        return a - (Math.divide(a, b) * b);
+    }
+
+    function int getBit(int i) {
+        return twoToThe[i];
     }
 }
