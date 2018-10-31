@@ -7,11 +7,30 @@
 class Screen {
     static boolean screenColor;
     static Array screenAddress;
+    static Array bitArray;
     /** Initializes the Screen. */
     function void init() {
         // screen 16384 -- 24575
         let screenAddress = 16384;
         let screenColor = true;
+
+        let bitArray = Array.new(16);
+        let bitArray[0] = 1;
+        let bitArray[1] = 2;
+        let bitArray[2] = 4;
+        let bitArray[3] = 8;
+        let bitArray[4] = 16;
+        let bitArray[5] = 32;
+        let bitArray[6] = 64;
+        let bitArray[7] = 128;
+        let bitArray[8] = 256;
+        let bitArray[9] = 512;
+        let bitArray[10] = 1024;
+        let bitArray[11] = 2048;
+        let bitArray[12] = 4096;
+        let bitArray[13] = 8192;
+        let bitArray[14] = 16384;
+        let bitArray[15] = 16384 + 16384;
         return;
     }
 
@@ -40,14 +59,14 @@ class Screen {
         var int address, mask;
 
         let address = (y * 32) + (x / 16);
-        let mask = Math.getBit(x & 15);
+        let mask = bitArray[x & 15];
 
         if (screenColor) {
             let screenAddress[address] = screenAddress[address] | mask;
         } else {
             let screenAddress[address] = screenAddress[address] & ~mask;
         }
-            
+        
         return;
     }
 
@@ -55,6 +74,7 @@ class Screen {
     function void drawLine(int x1, int y1, int x2, int y2) {
         var int dx, dy, a, b, temp, adyMinusbdx;
 
+        // coordinate exchange
         if (x1 > x2) {
             let temp = x1;
             let x1 = x2;
@@ -69,10 +89,12 @@ class Screen {
         let dy = y2 - y1;
 
         if (dx = 0) {
+            // VerticalLine
             do Screen.drawVerticalLine(x1, y1, y2);
             return;
         } else {
             if (dy = 0) {
+                // HorizontalLine
                 do Screen.drawHorizontalLine(x1, x2, y1);
                 return;
             } 
@@ -82,28 +104,30 @@ class Screen {
         let b = 0;
         let adyMinusbdx = 0;
 
-        if (y1 < y2) {
+        if (y2 > y1) {
             while (~(a > dx) & ~(b > dy)) {
                 do Screen.drawPixel(x1 + a, y1 + b);
                 
                 if (adyMinusbdx < 0) {
-                    let a = a + 1;
+                    let b = b + 1;
                     let adyMinusbdx = adyMinusbdx + dx;
                 } else {
-                    let b = b + 1;
+                    let a = a + 1;
                     let adyMinusbdx = adyMinusbdx - dy;
                 }
             }
         } else {
-            while(~(a > dx) & ~(b < dy)){
+            // y1 > y2
+            let dy = -dy;
+            while (~(a > dx) & ~(b > dy)) {
                 do Screen.drawPixel(x1 + a, y1 - b);
                 
                 if (adyMinusbdx < 0) {
                     let a = a + 1;
-                    let adyMinusbdx = adyMinusbdx + dx;
+                    let adyMinusbdx = adyMinusbdx + dy;
                 } else {
                     let b = b + 1;
-                    let adyMinusbdx = adyMinusbdx - dy;
+                    let adyMinusbdx = adyMinusbdx - dx;
                 }
             }
         }
@@ -125,6 +149,7 @@ class Screen {
             do Screen.drawHorizontalLine(x1, x2, y1);
             let y1 = y1 + 1;
         }
+
         return;
     }
 
@@ -137,26 +162,74 @@ class Screen {
             let square = r * r;
             while (~(dy > r)) {
                 let dx = Math.sqrt(square - (dy * dy));
-                do Screen.drawHorizontalLine(x - dx, x + dx, dy);
+                do Screen.drawHorizontalLine(x - dx, x + dx, y + dy);
                 let dy = dy + 1;
             }
         }
+
         return;
     }
 
     function void drawHorizontalLine(int x1, int x2, int y) {
-        var int temp;
+        var int temp, address1, address2, mask, i;
 
+        // exchange
         if (x1 > x2) {
             let temp = x1;
             let x1 = x2;
             let x2 = temp;
         }
 
-        while (~(x1 > x2)) {
-            do Screen.drawPixel(x1, y);
-            let x1 = x1 + 1;
+        // x1 address
+        let address1 = (y * 32) + (x1 / 16);
+
+        // x2 address
+        let address2 = (y * 32) + (x2 / 16);
+
+        if (address1 = address2) {
+            while (~(x1 > x2)) {
+                do Screen.drawPixel(x1, y);
+                let x1 = x1 + 1;
+            }
+            return;
         }
+
+        //      0      1     2     3    4     6     7
+        //  |..x1..|16bits|32bits|... |... |... |..x2..|
+
+        let i = x1 & 15;
+        while (i < 16) {
+            let mask = bitArray[i];
+
+            if (screenColor) {
+                let screenAddress[address1] = screenAddress[address1] | mask;
+            } else {
+                let screenAddress[address1] = screenAddress[address1] & ~mask;
+            }
+            let i = i + 1;
+        }
+
+        let i = x2 & 15;
+        while (~(i < 0)) {
+            let mask = bitArray[i];
+
+            if (screenColor) {
+                let screenAddress[address2] = screenAddress[address2] | mask;
+            } else {
+                let screenAddress[address2] = screenAddress[address2] & ~mask;
+            }
+            let i = i - 1;
+        }
+
+
+        if ((address2 - address1) > 1) {
+            let address1 = address1 + 1;
+            while (address2 > address1) {
+                let screenAddress[address1] = screenColor;
+                let address1 = address1 + 1;
+            }
+        }
+
         return;
     }
 
@@ -173,6 +246,7 @@ class Screen {
             do Screen.drawPixel(x, y1);
             let y1 = y1 + 1;
         }
+
         return;
     }
 }
