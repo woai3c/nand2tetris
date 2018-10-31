@@ -132,10 +132,6 @@ class Math {
         return ~((x & twoToThe[j]) = 0);
     }
 
-    function int mod(int a, int b) {
-        return a - (Math.divide(a, b) * b);
-    }
-
     function int getBit(int i) {
         return twoToThe[i];
     }
