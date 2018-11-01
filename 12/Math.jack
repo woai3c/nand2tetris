@@ -131,8 +131,4 @@ class Math {
     function int bit(int x, int j) {
         return ~((x & twoToThe[j]) = 0);
     }
-
-    function int getBit(int i) {
-        return twoToThe[i];
-    }
 }
