@@ -14,7 +14,7 @@ class Screen {
         let screenAddress = 16384;
         let screenColor = true;
 
-        let bitArray = Array.new(16);
+        let bitArray = Array.new(17);
         let bitArray[0] = 1;
         let bitArray[1] = 2;
         let bitArray[2] = 4;
@@ -31,6 +31,7 @@ class Screen {
         let bitArray[13] = 8192;
         let bitArray[14] = 16384;
         let bitArray[15] = 16384 + 16384;
+        let bitArray[16] = 0;
         return;
     }
 
@@ -138,15 +139,59 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
-        var int temp;
+        var int temp, address1, address2, i, leftMask, rightMask, mask, tempA1, tempA2;
         if (y1 > y2) {
             let temp = y1;
             let y1 = y2;
             let y2 = temp;
         }
 
+        if (x1 > x2) {
+            let temp = x1;
+            let x1 = x2;
+            let x2 = temp;
+        }
+
+        let address1 = (y1 * 32) + (x1 / 16);
+        let address2 = (y1 * 32) + (x2 / 16);
+
+        let i = x1 & 15;
+        let leftMask = ~(bitArray[i] - 1);
+
+        let i = x2 & 15;
+        let rightMask = bitArray[i + 1] - 1;
+
+        let mask = leftMask & rightMask;
+
         while (~(y2 < y1)) {
-            do Screen.drawHorizontalLine(x1, x2, y1);
+            let tempA1 = address1;
+            let tempA2 = address2;
+
+            if (tempA1 = tempA2) {
+                if (screenColor) {
+                    let screenAddress[tempA1] = screenAddress[tempA1] | mask;
+                } else {
+                    let screenAddress[tempA1] = screenAddress[tempA1] & ~mask;
+                }
+            } else {
+                if (screenColor) {
+                    let screenAddress[tempA1] = screenAddress[tempA1] | leftMask;
+                    let screenAddress[tempA2] = screenAddress[tempA2] | rightMask;
+                } else {
+                    let screenAddress[tempA1] = screenAddress[tempA1] & ~leftMask;
+                    let screenAddress[tempA2] = screenAddress[tempA2] & ~rightMask;
+                }
+
+                if ((tempA2 - tempA1) > 1) {
+                    let tempA1 = tempA1 + 1;
+                    while (tempA2 > tempA1) {
+                        let screenAddress[tempA1] = screenColor;
+                        let tempA1 = tempA1 + 1;
+                    }
+                }
+            }
+            let address1 = address1 + 32;
+            let address2 = address2 + 32;
             let y1 = y1 + 1;
         }
 
@@ -171,7 +216,7 @@ class Screen {
     }
 
     function void drawHorizontalLine(int x1, int x2, int y) {
-        var int temp, address1, address2, mask, i;
+        var int temp, address1, address2, leftMask, rightMask, mask, i;
 
         // exchange
         if (x1 > x2) {
@@ -186,41 +231,33 @@ class Screen {
         // x2 address
         let address2 = (y * 32) + (x2 / 16);
 
-        if (address1 = address2) {
-            while (~(x1 > x2)) {
-                do Screen.drawPixel(x1, y);
-                let x1 = x1 + 1;
-            }
-            return;
-        }
-
         //      0      1     2     3    4     6     7
         //  |..x1..|16bits|32bits|... |... |... |..x2..|
 
+        // index
         let i = x1 & 15;
-        while (i < 16) {
-            let mask = bitArray[i];
+        let leftMask = ~(bitArray[i] - 1);
 
+        let i = x2 & 15;
+        let rightMask = bitArray[i + 1] - 1;
+
+        if (address1 = address2) {
+            let mask = leftMask & rightMask;
             if (screenColor) {
                 let screenAddress[address1] = screenAddress[address1] | mask;
             } else {
                 let screenAddress[address1] = screenAddress[address1] & ~mask;
             }
-            let i = i + 1;
-        }
-
-        let i = x2 & 15;
-        while (~(i < 0)) {
-            let mask = bitArray[i];
-
+            return;
+        } else {
             if (screenColor) {
-                let screenAddress[address2] = screenAddress[address2] | mask;
+                let screenAddress[address1] = screenAddress[address1] | leftMask;
+                let screenAddress[address2] = screenAddress[address2] | rightMask;
             } else {
-                let screenAddress[address2] = screenAddress[address2] & ~mask;
+                let screenAddress[address1] = screenAddress[address1] & ~leftMask;
+                let screenAddress[address2] = screenAddress[address2] & ~rightMask;
             }
-            let i = i - 1;
         }
-
 
         if ((address2 - address1) > 1) {
             let address1 = address1 + 1;
