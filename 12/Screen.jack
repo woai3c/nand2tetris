@@ -271,7 +271,7 @@ class Screen {
     }
 
     function void drawVerticalLine(int x, int y1, int y2) {
-        var int temp;
+        var int temp, address, mask;
 
         if (y1 > y2) {
             let temp = y1;
@@ -279,8 +279,17 @@ class Screen {
             let y2 = temp;
         }
 
+        let address = (y1 * 32) + (x / 16);
+        let mask = bitArray[x & 15];
+
         while (~(y1 > y2)) {
-            do Screen.drawPixel(x, y1);
+            if (screenColor) {
+                let screenAddress[address] = screenAddress[address] | mask;
+            } else {
+                let screenAddress[address] = screenAddress[address] & ~mask;
+            }
+
+            let address = address + 32;
             let y1 = y1 + 1;
         }
 
