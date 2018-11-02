@@ -30,9 +30,8 @@ class Math {
     function int abs(int x) {
         if (x < 0) {
             return -x;
-        } else {
-            return x;
-        }
+        } 
+        return x;
     }
 
     /** Returns the product of x and y. 
@@ -41,15 +40,16 @@ class Math {
      *  the Jack expressions x*y and multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
-        var int sum, index;
+        var int sum, index, mask;
 
-        let index = 0;
+        let mask = 1;
         while (index < 16) {
-            if (Math.bit(y, index)) {
+            if (y & mask) {
                 let sum = sum + x;
             }
             let x = x + x;
             let index = index + 1;
+            let mask = mask + mask;
         }
 
         return sum;
@@ -61,23 +61,30 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
-        var int q, result, sum;
-        var boolean isPos;
+        var int q;
 
-        let isPos = ((x > 0) = (y > 0));
-        let x = Math.abs(x);
-        let y = Math.abs(y);
-
-        if (y > x) {
+        if (y = 0) {
+            do Sys.error(3);
             return 0;
         }
 
-        if (y < 16384) {
-            let q = Math.divide(x, y + y);
+        let q = Math._div(Math.abs(x), Math.abs(y));
+
+        if ((x < 0) = (y < 0)) { 
+            return q;
         } else {
-            let q = 0;
+            return -q;
+        }
+    }
+
+    function int _div(int x, int y) {
+        var int q, result, sum;
+
+        if ((y > x) | ~(y < 16384)) {
+            return 0;
         }
 
+        let q = Math.divide(x, y + y);
         let sum = q + q;
 
         if ((x - (sum * y)) < y) {
@@ -85,16 +92,19 @@ class Math {
         } else {
             let result = sum + 1;
         }
-        if (isPos) {
-            return result;
-        } else {
-            return -result;
-        }
+
+        return result;
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
         var int y, j, temp, tempTwo;
+
+        if (x < 0) {
+            do Sys.error(4);
+            return 0;
+        }
+
         let y = 0;
         let j = 7;
 
@@ -114,21 +124,19 @@ class Math {
     function int max(int a, int b) {
         if (a > b) {
             return a;
-        } else {
-            return b;
-        }
+        } 
+        return b;
     }
 
     /** Returns the smaller number. */
     function int min(int a, int b) {
         if (a < b) {
             return a;
-        } else {
-            return b;
-        }
+        } 
+        return b;
     }
 
-    function int bit(int x, int j) {
-        return ~((x & twoToThe[j]) = 0);
+    function int mod(int a, int b) {
+        return a - (Math.divide(a, b) * b);
     }
 }
