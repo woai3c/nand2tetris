@@ -13,16 +13,15 @@ class Output {
 
     // Character map for displaying characters
     static Array charMaps; 
-    field int row, col;
-    field int address;
+    static int screenRow, screenRol, screenAddress;
+    static int screenAddress;
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
-        let row = 0;
-        let col = 0;
+        let screenRow = 0;
+        let screenCol = 0;
         // screen 16384 -- 24575
-        let address = 16384;
+        let screenAddress = 16384;
         do Output.initMap();
-        do Output.moveCursor(row, col);
     }
 
     // Initializes the character map array
@@ -30,7 +29,7 @@ class Output {
         var int i;
     
         let charMaps = Array.new(127);
-        
+
         // Black square, used for displaying non-printable characters.
         do Output.create(0,63,63,63,63,63,63,63,63,63,0,0);
 
@@ -139,15 +138,15 @@ class Output {
         do Output.create(125,7,12,12,12,56,12,12,12,7,0,0);    // }
         do Output.create(126,38,45,25,0,0,0,0,0,0,0,0);        // ~
 
-	    return;
+        return;
     }
 
     // Creates the character map array of the given character index, using the given values.
     function void create(int index, int a, int b, int c, int d, int e,
                          int f, int g, int h, int i, int j, int k) {
-	    var Array map;
+        var Array map;
 
-	    let map = Array.new(11);
+        let map = Array.new(11);
         let charMaps[index] = map;
 
         let map[0] = a;
