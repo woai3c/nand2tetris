@@ -13,7 +13,7 @@ class Output {
 
     // Character map for displaying characters
     static Array charMaps; 
-    static int screenRow, screenRol, screenAddress;
+    static int screenRow, screenCol, screenAddress;
     static int screenAddress;
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
@@ -21,13 +21,14 @@ class Output {
         let screenCol = 0;
         // screen 16384 -- 24575
         let screenAddress = 16384;
+
         do Output.initMap();
+        do Output.moveCursor(screenRow, screenCol);
+        return;
     }
 
     // Initializes the character map array
     function void initMap() {
-        var int i;
-    
         let charMaps = Array.new(127);
 
         // Black square, used for displaying non-printable characters.
@@ -72,7 +73,7 @@ class Output {
         do Output.create(64,30,51,51,59,59,59,27,3,30,0,0);  // @
         do Output.create(63,30,51,51,24,12,12,0,12,12,0,0);  // ?
 
-        do Output.create(65,0,0,0,0,0,0,0,0,0,0,0);          // A ** TO BE FILLED **
+        do Output.create(65,12,30,51,51,63,51,51,51,51,0,0);          // A ** TO BE FILLED **
         do Output.create(66,31,51,51,51,31,51,51,51,31,0,0); // B
         do Output.create(67,28,54,35,3,3,3,35,54,28,0,0);    // C
         do Output.create(68,15,27,51,51,51,51,51,27,15,0,0); // D
@@ -177,12 +178,73 @@ class Output {
     /** Moves the cursor to the j-th column of the i-th row,
      *  and erases the character displayed there. */
     function void moveCursor(int i, int j) {
+        var int address, mask, temp, index;
 
+        let screenRow = i;
+        let screenCol = j;
+
+        if ((i > 22) | (j > 63) | (i < 0) | (j < 0)) {
+            do Sys.error(4);
+            return;
+        }
+
+        let temp = j * 8;
+        let address = (i * 11 * 32) + (temp / 16);
+        let mask = temp & 15;
+
+        if (mask = 0) {
+            while (index < 11) {
+                let screenAddress[address] = screenAddress[address] & (~255);
+                let index  = index + 1;
+                let address = address + 32;
+            }
+        } else {
+            while (index < 11) {
+                let screenAddress[address] = screenAddress[address] & 255;
+                let index  = index + 1;
+                let address = address + 32;
+            }
+        }
+
+        return;
     }
 
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
+        var int temp, mask;
+        var Array map;
+
+        let temp = screenCol * 8;
+        let address = (screenRow * 11 * 32) + (temp / 16);
+        let mask = screenCol & 15;
+        let map = charMaps[c];
+
+        if (mask = 0) {
+            while (index < 11) {
+                let screenAddress[address] = screenAddress[address] | map[index];
+                let index  = index + 1;
+                let address = address + 32;
+            }
+        } else {
+            while (index < 11) {
+                let screenAddress[address] = screenAddress[address] | (map[index] * 256);
+                let index  = index + 1;
+                let address = address + 32;
+            }
+        }
+        
+        let screenCol = screenCol + 1; 
+
+        if (screenCol < 64) {
+            do Output.moveCursor(screenRow, screenCol);
+        } else {
+            let screenRow = screenRow + 1;
+            let screenCol = 0;
+            do Output.moveCursor(screenRow, screenCol);
+        }
+
+        return;
     }
 
     /** displays the given string starting at the cursor location,
