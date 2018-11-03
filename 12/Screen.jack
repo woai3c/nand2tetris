@@ -199,20 +199,36 @@ class Screen {
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    // Bresenham
     function void drawCircle(int x, int y, int r) {
-        var int dy, dx, square;
+        var int i, j; 
+        var int counter; 
 
-        if (r < 182) {
-            let dy = -r;
-            let square = r * r;
-            while (~(dy > r)) {
-                let dx = Math.sqrt(square - (dy * dy));
-                do Screen.drawHorizontalLine(x - dx, x + dx, y + dy);
-                let dy = dy + 1;
-            }
-        }
+        let i = 0; 
+        let j = r; 
+        let counter = 3 - (r + r); 
 
-        return;
+        do Screen.drawHorizontalLine(x - r, x + r, y); 
+
+        while (j > i) { 
+
+            if (counter < 0) { 
+                let counter = counter + 6 + i + i + i + i; 
+                let i = i + 1; 
+            } else { 
+                if ((counter > 0) & (j > i)) { 
+                        let j = j - 1; 
+                        let counter = (counter + 4) - (j + j + j + j); 
+                } 
+            } 
+
+            do Screen.drawHorizontalLine(x - i, x + i, y + j); 
+            do Screen.drawHorizontalLine(x - i, x + i, y - j); 
+            do Screen.drawHorizontalLine(x - j, x + j, y + i); 
+            do Screen.drawHorizontalLine(x - j, x + j, y - i); 
+
+        } 
+        return; 
     }
 
     function void drawHorizontalLine(int x1, int x2, int y) {
