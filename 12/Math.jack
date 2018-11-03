@@ -3,26 +3,26 @@
  * Note: Jack compilers implement multiplication and division using OS method calls.
  */
 class Math {
-    static Array twoToThe;
+    static Array bitArray;
     /** Initializes the library. */
     function void init() {
-        let twoToThe = Array.new(16);
-        let twoToThe[0] = 1;
-        let twoToThe[1] = 2;
-        let twoToThe[2] = 4;
-        let twoToThe[3] = 8;
-        let twoToThe[4] = 16;
-        let twoToThe[5] = 32;
-        let twoToThe[6] = 64;
-        let twoToThe[7] = 128;
-        let twoToThe[8] = 256;
-        let twoToThe[9] = 512;
-        let twoToThe[10] = 1024;
-        let twoToThe[11] = 2048;
-        let twoToThe[12] = 4096;
-        let twoToThe[13] = 8192;
-        let twoToThe[14] = 16384;
-        let twoToThe[15] = 16384 + 16384;
+        let bitArray = Array.new(16);
+        let bitArray[0] = 1;
+        let bitArray[1] = 2;
+        let bitArray[2] = 4;
+        let bitArray[3] = 8;
+        let bitArray[4] = 16;
+        let bitArray[5] = 32;
+        let bitArray[6] = 64;
+        let bitArray[7] = 128;
+        let bitArray[8] = 256;
+        let bitArray[9] = 512;
+        let bitArray[10] = 1024;
+        let bitArray[11] = 2048;
+        let bitArray[12] = 4096;
+        let bitArray[13] = 8192;
+        let bitArray[14] = 16384;
+        let bitArray[15] = 16384 + 16384;
         return;
     }
 
@@ -109,7 +109,7 @@ class Math {
         let j = 7;
 
         while (~(j < 0)) {
-            let temp = y + twoToThe[j];
+            let temp = y + bitArray[j];
             let tempTwo = temp * temp;
 
             if (~(tempTwo > x) & (tempTwo > 0)) {
