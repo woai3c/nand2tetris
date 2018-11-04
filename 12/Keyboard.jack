@@ -50,10 +50,10 @@ class Keyboard {
                 while (true) {
                     let temp = Keyboard.keyPressed();
                     if (temp = 0) {
-                        if (~(c = 129)) {
-                            do Output.backSpace();
+                        do Output.backSpace();
+                        if (~(c = 129) & (~(c = 128))) {
+                            do Output.printChar(c);
                         }
-                        do Output.printChar(c);
                         return c;
                     }
                 }
@@ -78,7 +78,7 @@ class Keyboard {
             let c = Keyboard.readChar();
 
             if (c = 128) {
-                do Output.printChar(c);
+                do Output.println();
                 return s;
             }
 
