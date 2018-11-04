@@ -13,17 +13,15 @@ class Output {
 
     // Character map for displaying characters
     static Array charMaps; 
-    static int screenRow, screenCol, screenAddress;
-    static int screenAddress;
+    static int screenRow, screenCol;
+    static Array screenAddress;
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
-        let screenRow = 0;
-        let screenCol = 0;
         // screen 16384 -- 24575
         let screenAddress = 16384;
 
         do Output.initMap();
-        do Output.moveCursor(screenRow, screenCol);
+        do Output.moveCursor(0, 0);
         return;
     }
 
@@ -212,12 +210,12 @@ class Output {
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
-        var int temp, mask;
+        var int temp, mask, address, index;
         var Array map;
 
         let temp = screenCol * 8;
         let address = (screenRow * 11 * 32) + (temp / 16);
-        let mask = screenCol & 15;
+        let mask = temp & 15;
         let map = charMaps[c];
 
         if (mask = 0) {
@@ -241,6 +239,9 @@ class Output {
         } else {
             let screenRow = screenRow + 1;
             let screenCol = 0;
+            if (screenRow > 22) {
+                let screenRow = 0;
+            }
             do Output.moveCursor(screenRow, screenCol);
         }
 
@@ -250,18 +251,64 @@ class Output {
     /** displays the given string starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printString(String s) {
+        var int len, i;
+
+        let len = s.length();
+
+        while (len > i) {
+            do Output.printChar(s.charAt(i));
+            let i = i + 1;
+        }
+
+        return;
     }
 
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
-    function void printInt(int i) {
+    function void printInt(int n) {
+        var String s;
+        var int len, i;
+
+        let s = String.new(6);
+        do s.setInt(n);
+        let len = s.length();
+
+        while (len > i) {
+            do Output.printChar(s.charAt(i));
+            let i = i + 1;
+        }
+
+        do s.dispose();
+
+        return;
     }
 
     /** Advances the cursor to the beginning of the next line. */
     function void println() {
+        let screenRow = screenRow + 1;
+        let screenCol = 0;
+
+        if (screenRow > 22) {
+            let screenRow = 0;
+        }
+        do Output.moveCursor(screenRow, screenCol);
+
+        return;
     }
 
     /** Moves the cursor one column back. */
     function void backSpace() {
+        if ((screenCol = 0) & (screenRow = 0)) {
+            return;
+        }
+
+        let screenCol = screenCol - 1;
+
+        if (screenCol < 0) {
+            let screenCol = 63;
+            let screenRow = screenRow - 1;
+        }
+        do Output.moveCursor(screenRow, screenCol);
+        return;
     }
 }
