@@ -216,7 +216,7 @@ class Output {
         let temp = screenCol * 8;
         let address = (screenRow * 11 * 32) + (temp / 16);
         let mask = temp & 15;
-        let map = charMaps[c];
+        let map = Output.getMap(c);
 
         if (mask = 0) {
             while (index < 11) {

@@ -110,9 +110,9 @@ class String {
     method void setInt2(int n) {
         var int nextN;
 
-        if(n < 10){
+        if (n < 10) {
             do appendChar(String.d2c(n));
-        }else{
+        } else {
             let nextN = n / 10;
             do setInt2(nextN);
             do appendChar(String.d2c(n - (nextN * 10)));
