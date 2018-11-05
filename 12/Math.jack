@@ -80,11 +80,16 @@ class Math {
     function int _div(int x, int y) {
         var int q, result, sum;
 
-        if ((y > x) | ~(y < 16384)) {
+        if (y > x) {
             return 0;
         }
 
-        let q = Math.divide(x, y + y);
+        if (y < 16384) {
+            let q = Math._div(x, y + y);
+        } else {
+            let q = 0;
+        }
+
         let sum = q + q;
 
         if ((x - (sum * y)) < y) {
