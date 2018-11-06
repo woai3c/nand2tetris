@@ -4,20 +4,21 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
-    static Array memoryBaseAddress, heapAddress, preSegment, freeList;
-    static int heapLength;
+    static Array memoryBaseAddress, freeList;
+
     /** Initializes the class. */
     function void init() {
-        let memoryBaseAddress = 0;
-        let heapAddress = 2048;
-        let heapLength = 16383 - 2048 + 1;
-        let freeList = heapAddress;
+        var int len;
+        // heap address 2048--16383
 
-        // 0 next 指向下一个内存段
-        // 1 size 代表可用内存的长度
+        let memoryBaseAddress = 0;
+        let len = 16383 - 2048 + 1;
+        let freeList = 2048;
+
+        // 0 next segment
+        // 1 segment block size
         let freeList[0] = null;
-        let heapLength = heapLength - 2;
-        let freeList[1] = heapLength;
+        let freeList[1] = len - 2;
 
         return;
     }
@@ -37,7 +38,7 @@ class Memory {
      *  a reference to its base address. */
     function int alloc(int size) {
         var int allocSize;
-        var Array segment, temp;
+        var Array segment;
 
         let allocSize = size + 2;
 
