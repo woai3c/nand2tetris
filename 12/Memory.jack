@@ -4,26 +4,115 @@
  * consists of 32,768 words, each holding a 16-bit binary number.
  */ 
 class Memory {
-
+    static Array memoryBaseAddress, heapAddress, preSegment, freeList;
+    static int heapLength;
     /** Initializes the class. */
     function void init() {
+        let memoryBaseAddress = 0;
+        let heapAddress = 2048;
+        let heapLength = 16383 - 2048 + 1;
+        let freeList = heapAddress;
+
+        // 0 next 指向下一个内存段
+        // 1 size 代表可用内存的长度
+        let freeList[0] = null;
+        let heapLength = heapLength - 2;
+        let freeList[1] = heapLength;
+
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return memoryBaseAddress[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let memoryBaseAddress[address] = value;
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
     function int alloc(int size) {
+        var int allocSize;
+        var Array segment, temp;
+
+        let allocSize = size + 2;
+
+        if (freeList[1] > allocSize) {
+            let freeList[1] = freeList[1] - allocSize;
+            let segment = freeList + 2 + freeList[1];
+            let segment[0] = null;
+            let segment[1] = size;
+        } else {
+            let segment = Memory.bestFit(size);
+        }
+
+        // block
+        return segment + 2;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
     function void deAlloc(Array o) {
+        var Array segment, pre, next, temp;
+
+        let segment = o - 2;
+        let pre = freeList;
+        let next = freeList[0];
+
+        while (~(next = null) & (next < segment)) {
+            let pre = next;
+            let next = next[0];
+        }
+
+        if (next = null) {
+            let segment[0] = null;
+            let pre[0] = segment;
+
+            if ((pre + pre[1] + 2) = segment) {
+                let pre[1] = pre[1] + segment[1] + 2;
+                let pre[0] = null;
+            }
+        } else {
+            let temp = pre[0];
+            let pre[0] = segment;
+            let segment[0] = temp;
+
+            if ((segment + segment[1] + 2) = next) {
+                let segment[1] = segment[1] + next[1] + 2;
+                let segment[0] = next[0];
+            }
+        }
+
+        return;
     }    
+
+
+    function Array bestFit(int size) {
+        var Array temp, segment;
+        var int tempSize;
+
+        let tempSize = size + 2;
+        let temp = freeList;
+
+        while (temp[1] < tempSize) {
+            // next address
+            if (temp[0] = null) {
+                do Sys.error(5);
+                return 0;
+            } else {
+                let temp = temp[0];
+            }
+        }
+
+        let temp[1] = temp[1] - tempSize;
+        let segment = temp + 2 + temp[1];
+        let segment[0] = null;
+        let segment[1] = size;
+
+        return segment;
+    }
 }
