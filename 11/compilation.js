@@ -3,21 +3,16 @@ const SymbolTable = require('./symbolTable')
 const VMWriter = require('./VMWriter')
 // 类表
 let mainTable
+
 // 子程序表
 let subTable
+
 // VMWriter实例 
 let vm 
-// 局部变量个数
-let localNum = 0
-// 函数名
-let funcName = ''
-// 参数个数
-let nArgs = 0
 
 // 是否构造函数
 let isCtr = false
-// 是否方法
-let isMethod = false
+
 // 调用方法的变量
 let variableOfCall = ''
 
@@ -101,6 +96,8 @@ CompilationEngine.prototype = {
                             case 'constructor':
                             case 'function':
                             case 'method':
+                                let isCtr, isMethod
+
                                 if (this.val == 'constructor') {
                                     isCtr = true
                                     isMethod = false
@@ -113,9 +110,7 @@ CompilationEngine.prototype = {
                                 }
                                 // 重置子符号表
                                 subTable.startSubroutine()
-                                funcName = ''
-                                localNum = 0
-                                this._compileSubroutine()
+                                this._compileSubroutine(isCtr, isMethod)
                                 break
                             default:
                                 this._error('static | field | constructor | function | method')
@@ -166,7 +161,8 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compileSubroutine() {
+    _compileSubroutine(isCtr, isMethod) {
+        let funcName = ''
         this._getNextToken()
         if (this.key == 'identifier' || this.key == 'keyword') {
             if (isCtr) {
@@ -191,13 +187,13 @@ CompilationEngine.prototype = {
         }
 
         if (this.val == '(') {
-            this._compileParameterList()
+            this._compileParameterList(isMethod)
             this._getNextToken()
             if (this.val == ')') {
                 this._getNextToken()
 
                 if (this.val == '{') {
-                    this._compileSubroutineBody(this.key, this.val)
+                    this._compileSubroutineBody(funcName, isCtr, isMethod)
                 } else {
                     this._error('{')
                 }
@@ -209,12 +205,13 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compileSubroutineBody() {
+    _compileSubroutineBody(funcName, isCtr, isMethod) {
+        let localNum = 0
         this._getNextToken()
 
         while (true) {
             if (this.val == 'var') {
-                this._compileVarDec()
+                localNum = this._compileVarDec(localNum)
             } else {
                 vm.writeFunction(funcName, localNum)
                 if (isCtr) {
@@ -229,10 +226,6 @@ CompilationEngine.prototype = {
                     vm.writePop('pointer', 0)
                 }
 
-                isCtr = false
-                isMethod = false
-                funcName = ''
-                localNum = 0
                 this._compileStatements()
             }
 
@@ -256,7 +249,7 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compileParameterList() {
+    _compileParameterList(isMethod) {
         let type
         this._getNextToken()
 
@@ -289,9 +282,9 @@ CompilationEngine.prototype = {
         this.i--
     },
 
-    _compileVarDec() {
+    _compileVarDec(localNum) {
         let type
-        
+
         this._getNextToken()
         if (this.key == 'keyword' || this.key == 'identifier') {
             // 类型
@@ -324,10 +317,12 @@ CompilationEngine.prototype = {
         this._getNextToken()
 
         if (this.val == 'var') {
-            this._compileVarDec(this.key, this.val)
+            localNum = this._compileVarDec(localNum)
         } else {
             this.i--
         }
+
+        return localNum
     },
 
     _compileStatements() {
@@ -341,14 +336,7 @@ CompilationEngine.prototype = {
                     break
                 case 'do':
                     this._compileDo()
-
-                    vm.writeCall(funcName, nArgs)
                     vm.writePop('temp', 0)
-
-                    funcName = ''
-                    nArgs = 0
-                    isMethod = false
-                    variableOfCall = ''
                     break
                 case 'return':
                     this._compileReturn()
@@ -367,7 +355,8 @@ CompilationEngine.prototype = {
 
     _compileDo() {
         let funcTempArry 
-
+        let funcName = ''
+        let isMethod
         this._getNextToken()
         if (this.key == 'identifier') {
             // 变量or类
@@ -382,11 +371,11 @@ CompilationEngine.prototype = {
 
             this._getNextToken()
             if (this.val == '.') {
-                this._compilePartOfCall()
+                this._compilePartOfCall(funcName, isMethod)
             } else if (this.val == '(') {
                 isMethod = true
                 funcName = this.class + '.' + funcName
-                this._compilePartOfCall()
+                this._compilePartOfCall(funcName, isMethod)
             } else {
                 this._error('. | )')
             }
@@ -582,7 +571,8 @@ CompilationEngine.prototype = {
 
     _compileTerm() {
         let tempName
-
+        let isMethod
+        let funcName = ''
         this._getNextToken()
         if (this.key == 'identifier') {
             tempName = this.val
@@ -591,13 +581,7 @@ CompilationEngine.prototype = {
                 case '(':
                     isMethod = true
                     funcName = this.class + '.' + tempName
-                    this._compilePartOfCall()
-
-                    vm.writeCall(funcName, nArgs)
-                    funcName = ''
-                    nArgs = 0
-                    isMethod = false
-                    variableOfCall = ''
+                    this._compilePartOfCall(funcName, isMethod)
                     break
                 case '.':
                     let funcTempArry = this._getTypeOfVariable(tempName)
@@ -609,13 +593,7 @@ CompilationEngine.prototype = {
                         funcName += tempName
                     }
 
-                    this._compilePartOfCall()
-
-                    vm.writeCall(funcName, nArgs)
-                    funcName = ''
-                    nArgs = 0
-                    isMethod = false
-                    variableOfCall = ''
+                    this._compilePartOfCall(funcName, isMethod)
                     break
                 case '[':
                     this._compileExpression()
@@ -681,7 +659,8 @@ CompilationEngine.prototype = {
         }
     },
 
-    _compilePartOfCall() {
+    _compilePartOfCall(funcName, isMethod) {
+        let nArgs
         if (this.val == '(') {
             // 如果是方法根据是变量.xxx或类.xxx来传入第一个参数
             if (isMethod) {
@@ -694,7 +673,12 @@ CompilationEngine.prototype = {
                 }
             }
 
-            this._compileExpressionList()
+            nArgs = this._compileExpressionList()
+
+            if (isMethod) {
+                nArgs++
+            }
+
             this._getNextToken()
             if (this.val != ')') {
                 this._error(')')
@@ -719,7 +703,12 @@ CompilationEngine.prototype = {
                         }
                     }
 
-                    this._compileExpressionList()
+                    nArgs = this._compileExpressionList()
+
+                    if (isMethod) {
+                        nArgs++
+                    }
+                    
                     this._getNextToken()
                     if (this.val != ')') {
                         this._error(')')
@@ -733,9 +722,12 @@ CompilationEngine.prototype = {
         } else {
             this._error('( | .')
         }
+
+        vm.writeCall(funcName, nArgs)
     },
 
     _compileExpressionList() {
+        let nArgs = 0
         this._getNextToken()
         if (this.val == ')' || this.val == ',') {
             this.i--
@@ -751,6 +743,7 @@ CompilationEngine.prototype = {
                 }
             }
         }
+        return nArgs
     },
 
     createXMLFile() {
