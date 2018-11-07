@@ -72,22 +72,21 @@ class Memory {
         if (next = null) {
             let segment[0] = null;
             let pre[0] = segment;
-
-            if ((pre + pre[1] + 2) = segment) {
-                let pre[1] = pre[1] + segment[1] + 2;
-                let pre[0] = null;
-            }
         } else {
             let temp = pre[0];
             let pre[0] = segment;
             let segment[0] = temp;
-
-            if ((segment + segment[1] + 2) = next) {
-                let segment[1] = segment[1] + next[1] + 2;
-                let segment[0] = next[0];
-            }
         }
 
+        if ((segment + segment[1] + 2) = next) {
+            let segment[1] = segment[1] + next[1] + 2;
+            let segment[0] = next[0];
+        }
+
+        if ((pre + pre[1] + 2) = segment) {
+            let pre[1] = pre[1] + segment[1] + 2;
+            let pre[0] = segment[0];
+        }
         return;
     }    
 
