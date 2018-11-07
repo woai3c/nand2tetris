@@ -10,9 +10,6 @@ let subTable
 // VMWriter实例 
 let vm 
 
-// 是否构造函数
-let isCtr = false
-
 // 调用方法的变量
 let variableOfCall = ''
 
