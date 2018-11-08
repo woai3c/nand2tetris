@@ -14,12 +14,21 @@
 
 ### 1.布尔逻辑
 介绍了各种基础逻辑门,并且所有门都是基于nand门实现的
-* and and16
-* dmux dmux4way dmux8way
-* mux mux16 mux4way16 mux8way16
-* not not16
-* or or16 or8way
+* and  and16
+* dmux  dmux4way  dmux8way
+* mux  mux16  mux4way16  mux8way16
+* not  not16
+* or  or16  or8way
 * xor
+
+### 2.布尔运算
+* 二进制数
+* 二进制加法
+* 半加器
+* 全加器
+* 加法器
+* 增量器
+* ALU
 
 ## 软件阶层体系
 6-12章集中讨论计算机的软件阶层体系
