@@ -1,4 +1,5 @@
-# 计算机系统要素-从零开始构建现代计算机-练习题答案
+# 计算机系统要素-从零开始构建现代计算机
+如果完成了本书所有的项目 你将会构建出一台计算机（在模拟器上运行） 实现一门语言和写出来一个简单的编译器以用语言标准库
 ## [全套工具](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
 ## [书籍下载 密码9ts8](https://pan.baidu.com/s/1iNQp1PXgbHBSYcs9Ufet4g) 
 ### [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
