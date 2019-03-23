@@ -15,6 +15,8 @@
 ### 注意
 我上传的只有答案 测试用例和工具请点击全套工具下载
 
+有问题欢迎提[issues](https://github.com/woai3c/nand2tetris/issues)
+
 ### QQ交流群39014053
 
 ## 内容简介
