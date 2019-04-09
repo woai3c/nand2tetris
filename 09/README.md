@@ -15,5 +15,10 @@ jc test
 ```
 即可编译成功
 
-PS: F:\nand2tetris\tools\JackCompiler.bat这个是你工具的路径
+如果你是 win10 系统
+```
+.\jc.cmd test
+```
+
+**注意：** F:\nand2tetris\tools\JackCompiler.bat这个是你工具的路径
 
