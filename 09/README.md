@@ -20,5 +20,5 @@ jc test
 .\jc.cmd test
 ```
 
-**注意：** F:\nand2tetris\tools\JackCompiler.bat 这个工具的路径 替换成自己工具的路径即可
+**注意：** F:\nand2tetris\tools\JackCompiler.bat 这个是工具的路径 你需要将它替换成自己工具的路径
 
