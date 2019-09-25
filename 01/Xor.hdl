@@ -13,5 +13,5 @@ CHIP Xor {
     And(a = a, b = n0, out = a0);
     Not(in = a, out = n1);
     And(a = n1, b = b, out = a1);
-    Or(a = a0, b = a1, out = out)
+    Or(a = a0, b = a1, out = out);
 }
