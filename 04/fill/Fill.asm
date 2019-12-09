@@ -34,7 +34,7 @@
     @1
     D = D - M
     @LOOP
-    D;JEQ
+    D;JLT
 
     @1
     // 缓存当前地址
@@ -57,7 +57,7 @@
     @1
     D = D - M
     @LOOP
-    D;JEQ
+    D;JGT
 
     @1
     // 缓存当前地址
