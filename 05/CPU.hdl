@@ -67,20 +67,18 @@ CHIP CPU {
 
     ALU(x = outDR, y = outAM, zx = zx, nx = nx, zy = zy, ny = ny, f = f, no = no, out = outALU, out = outM, zr=zr, ng=ng);
 
-    // 根据j位域和ALU的zr、ng位来判断跳转
+    // DIY 一个 pt位: 输出是否为正数?
+    Or(a = ng, b = zr, out = isNotPostive);
+    Not(in = isNotPostive, out = pt);
+
+    // 根据j位域和ALU的zr、ng位, 以及上面pt位, 来判断跳转
     And(a = isC, b = instruction[0], out = isGT);
     And(a = isC, b = instruction[1], out = isEQ);
     And(a = isC, b = instruction[2], out = isLT);
 
     And(a = ng, b = isLT, out = isLtJump);
     And(a = zr, b = isEQ, out = isEqJump);
-
-    // 输出是否大于0
-    Not(in = ng, out = notNg);
-    Not(in = zr, out = notZr);
-    And(a = notNg, b = notZr, out = isOutGt);
-    
-    And(a = isOutGt, b = isGT, out = isGtJump);
+    And(a = pt, b = isGT, out = isGtJump);
 
     Or(a = isLtJump, b = isEqJump, out = isJump);
     Or(a = isJump, b = isGtJump, out = jump);
