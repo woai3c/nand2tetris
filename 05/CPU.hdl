@@ -39,15 +39,17 @@ CHIP CPU {
     // 对isC再次取返 判断是否C指令 读者可以自行用1或0代入想像一下 isC实际上就是instruction[15]的值
     Not(in = isA, out = isC);
 
-    // 如果是C指令并且指令指定ALU输出存到AR 则将ALU的输出 输入到AR 否则将指令输入到AR
+    // 将什么样的值输入 AR?
+    // C指令[5] 是d1位, 它决定是否修改 AR 的值. 如果是, 将会把ALU的输出写入到AR
+    // 如果是A指令的话, 就把A指令本身(常数)写入到AR
     And(a = isC, b = instruction[5], out = isLoadAluOut);
     Mux16(a = instruction, b = outALU, sel = isLoadAluOut, out = inAR);
 
-    // 如果为A指令或指令指定输出到A处理器 则将AR的load位置1
+    // 是否需要修改 AR?(条件是 A指令 或 C指令的d1位为1), 则将AR的load位置1
     Or(a = isA, b = instruction[5], out = isLoadAR);
     ARegister(in = inAR, load = isLoadAR, out = outAR, out[0..14] = addressM);
 
-    // 根据指令中的a位域判断将AR的输出或者inM输入到ALU
+    // 根据指令的a位域判断A的用途, 直接使用A的值还是为了获取M[A]? (书P67)
     Mux16(a = outAR, b = inM, sel = instruction[12], out = outAM);
 
     // 如果是C指令并且规定写入到M
