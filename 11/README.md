@@ -1,2 +1,9 @@
+### 编译
+```
+// 处理单个文件
+node analyzer.js xxx.vm
+// 处理目录
+node analyzer.js xxx
+```
 第10章是 文本流->词法分析->tokens->语法分析->抽象语法树<br>
 本章 文本流->词法分析->tokens->语法分析->vm代码
