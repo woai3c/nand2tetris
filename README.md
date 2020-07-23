@@ -1,5 +1,5 @@
 # 计算机系统要素-从零开始构建现代计算机（nand2tetris）
-这本书主要讲解了计算机原理（1-6章）、编译原理（7-11章）、操作系统相关知识（12章）。不要看内容这么多，其实这本书的内容非常通俗易懂，翻译也很给力。每一章背后都有对应的练习，需要你手写代码去完成，堪称理论与实践结合的经典。
+这本书主要讲解了计算机原理（1-5章）、编译原理（6-11章）、操作系统相关知识（12章）。不要看内容这么多，其实这本书的内容非常通俗易懂，翻译也很给力。每一章背后都有对应的练习，需要你手写代码去完成，堪称理论与实践结合的经典。
 
 这里引用一下书里的内容简介，大家可以感受一下。
 >本书通过展现简单但功能强大的计算机系统之构建过程，为读者呈现了一幅完整、严格的计算机应用科学大图景。本书作者认为，理解计算机工作原理的最好方法就是亲自动手，从零开始构建计算机系统。
@@ -9,29 +9,26 @@
 
 而且，这本书的门槛非常低，只要你能熟练运用一门编程语言即可。
 
-本书从与非门开始教你一步步构建一个完整的计算机（1-6章）；从第 7 章开始一直到第 11 章，需要完成三个编译器（汇编编译器、VM 编译器、Jack 语言编译器）；最后一章则需要完成操作系统部分功能。
+本书从与非门开始教你一步步构建一个完整的计算机（1-5章）；从第 6 章开始一直到第 11 章，需要完成三个编译器（汇编编译器、VM 编译器、Jack 语言编译器）；最后一章则需要完成操作系统部分功能。
 
 如果你完成了本书所有的项目，则会获得以下成就：
 * 构建出一台计算机（在模拟器上运行） 
 * 实现一门语言和相应的语言标准库
 * 实现一个简单的编译器
 
-## [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
-
-## [书籍下载](https://github.com/woai3c/recommended-books/blob/master/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E8%A6%81%E7%B4%A0%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%9E%84%E5%BB%BA%E7%8E%B0%E4%BB%A3%E8%AE%A1%E7%AE%97%E6%9C%BA.pdf) 
-
-## [本书作者制作的教学视频课程](https://www.coursera.org/learn/build-a-computer/home/welcome)
-
-## [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
-有问题可以去论坛上问，管理员解决问题速度非常快，一般24小时内，当时我做这本书的项目时，有很多不懂的地方都是在这上面问的，给了我非常大的帮助。
-如果英语不好，可以用百度翻译，翻译完再去提问。
+## 配套资料
+* [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
+* [书籍下载](https://github.com/woai3c/recommended-books/blob/master/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E8%A6%81%E7%B4%A0%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%9E%84%E5%BB%BA%E7%8E%B0%E4%BB%A3%E8%AE%A1%E7%AE%97%E6%9C%BA.pdf) 
+* [本书作者制作的教学视频课程](https://www.coursera.org/learn/build-a-computer/home/welcome)
+* [官网](https://www.nand2tetris.org/)
+* [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
 
 ### 注意
 我上传的只有答案 测试用例和工具请点击全套工具下载
 
 有问题欢迎提[issues](https://github.com/woai3c/nand2tetris/issues)
 
-### QQ交流群39014053
+也可以选择加入 QQ 交流群 39014053，有问题随时提问。
 
 ## 内容简介
 >本书通过展现简单但功能强大的计算机系统之构建过程，为读者呈现了一幅完整、严格的计算机应用科学大图景。本书作者认为，理解计算机工作原理的最好方法就是亲自动手，从零开始构建计算机系统。
