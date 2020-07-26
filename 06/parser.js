@@ -102,7 +102,7 @@ function int2Binary(num) {
 
     return str
 }
-// 匹配以注释开关的句子
+// 匹配以注释开头的句子
 const reg2 = /^(\/\/)/
 // 指令是否有效
 function isInstructionInvalid(instruction) {
