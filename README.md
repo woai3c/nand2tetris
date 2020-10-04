@@ -28,11 +28,9 @@
 * [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
 
 ### 注意
-我上传的只有答案 测试用例和工具请点击全套工具下载
+我上传的只有答案，测试用例和工具请点击全套工具下载。
 
-有问题欢迎提[issues](https://github.com/woai3c/nand2tetris/issues)
-
-也可以选择加入 QQ 交流群 39014053，有问题随时提问。
+有问题欢迎提[issues](https://github.com/woai3c/nand2tetris/issues)，也可以选择加入 QQ 交流群 **39014053**，有问题随时提问。
 
 ## 内容简介
 >本书通过展现简单但功能强大的计算机系统之构建过程，为读者呈现了一幅完整、严格的计算机应用科学大图景。本书作者认为，理解计算机工作原理的最好方法就是亲自动手，从零开始构建计算机系统。
