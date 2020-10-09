@@ -16,6 +16,10 @@
 * 实现一门语言和相应的语言标准库
 * 实现一个简单的编译器
 
+其他的编译原理书籍，在你学完后，可能还是不知道如何下手去实现一个编译器。
+
+但这本书不一样，它是**手把手教你一步一步的实现一个编译器**。
+
 ## 配套资料
 * [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
 * [书籍下载](https://github.com/woai3c/recommended-books/blob/master/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E8%A6%81%E7%B4%A0%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%9E%84%E5%BB%BA%E7%8E%B0%E4%BB%A3%E8%AE%A1%E7%AE%97%E6%9C%BA.pdf) 
@@ -24,11 +28,9 @@
 * [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
 
 ### 注意
-我上传的只有答案 测试用例和工具请点击全套工具下载
+我上传的只有答案，测试用例和工具请点击全套工具下载。
 
-有问题欢迎提[issues](https://github.com/woai3c/nand2tetris/issues)
-
-也可以选择加入 QQ 交流群 39014053，有问题随时提问。
+有问题欢迎提[issues](https://github.com/woai3c/nand2tetris/issues)，也可以选择加入 QQ 交流群 **39014053**，有问题随时提问。
 
 ## 内容简介
 >本书通过展现简单但功能强大的计算机系统之构建过程，为读者呈现了一幅完整、严格的计算机应用科学大图景。本书作者认为，理解计算机工作原理的最好方法就是亲自动手，从零开始构建计算机系统。
