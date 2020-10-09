@@ -120,7 +120,7 @@ function writeCall(command, type) {
     output += '@' + argumentNum + '\r\n'
             + 'D=A\r\n'
             + '@5\r\n'
-            + 'D=A+D\r\n'
+            + 'D=D+A\r\n'
             + '@SP\r\n'
             + 'D=M-D\r\n'
             + '@ARG\r\n'
