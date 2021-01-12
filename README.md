@@ -38,6 +38,13 @@
 <br>全书基于“先抽象再实现”的阐述模式，每一章都介绍一个关键的硬件或软件抽象，一种实现方式以及一个实际的项目。完成这些项目所必要的计算机科学知识在本书中都有涵盖，只要求读者具备程序设计经验。本书配套的支持网站提供了书中描述的用于构建所有硬件和软件系统所必需的工具和资料，以及用于12个项目的200个测试程序。<br>
 全书内容广泛、涉猎全面，适合计算机及相关专业本科生、研究生、技术开发人员、教师以及技术爱好者参考和学习。
 
+在完成所有项目后，可以跑一下软件提供的测试项目，感受一下计算机的奇妙之处：
+
+![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d040649df3bb4cd28b7b90a9f857fe4e~tplv-k3u1fbpfcp-zoom-1.image)
+
+![](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e5820185fae84ac389f457d5df08f2c8~tplv-k3u1fbpfcp-zoom-1.image)
+
+![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ae42f59db6714190a9a2b8c13741d0c2~tplv-k3u1fbpfcp-zoom-1.image)
 
 ## 硬件平台
 
