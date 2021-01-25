@@ -1,7 +1,7 @@
 ### 编译
 ```
 // 处理单个文件
-node analyzer.js xxx.vm
+node analyzer.js xxx.jack
 // 处理目录
 node analyzer.js xxx
 ```
