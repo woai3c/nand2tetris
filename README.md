@@ -46,6 +46,9 @@
 
 ![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ae42f59db6714190a9a2b8c13741d0c2~tplv-k3u1fbpfcp-zoom-1.image)
 
+## 问题
+* [windows 下无法打开 `.bat` 文件](https://github.com/woai3c/nand2tetris/tree/master/09)
+
 ## 硬件平台
 
 ### 1.布尔逻辑
