@@ -22,11 +22,11 @@
 
 ## 配套资料
 * [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
-* [书籍下载](https://github.com/woai3c/recommended-books/blob/master/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F%E8%A6%81%E7%B4%A0%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%9E%84%E5%BB%BA%E7%8E%B0%E4%BB%A3%E8%AE%A1%E7%AE%97%E6%9C%BA.pdf) 
 * [本书作者制作的教学视频课程](https://www.coursera.org/learn/build-a-computer/home/welcome)
 * [官网](https://www.nand2tetris.org/)
 * [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
 
+书籍请加 QQ 群，在群文件里下载。
 ### 注意
 我上传的只有答案，测试用例和工具请点击全套工具下载。
 
