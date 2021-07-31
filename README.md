@@ -33,7 +33,7 @@
 有问题欢迎提 [issues](https://github.com/woai3c/nand2tetris/issues)，也可以选择加入 QQ 交流群 **39014053**，有问题随时提问。
 
 ## 内容简介
-在完成所有项目后，可以跑一下软件提供的测试项目，感受一下计算机的奇妙之处：
+在完成所有项目后，可以跑一下软件提供的测试用例，感受一下计算机的奇妙之处：
 
 ![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d040649df3bb4cd28b7b90a9f857fe4e~tplv-k3u1fbpfcp-zoom-1.image)
 
