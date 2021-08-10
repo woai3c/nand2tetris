@@ -2,6 +2,8 @@
  * 1-bit register:
  * If load[t] == 1 then out[t+1] = in[t]
  *                 else out does not change (out[t+1] = out[t])
+ * DFF 触发器的特点是当前时钟的输出等于下一时钟的输出。
+ * 所以 a = preOut 里的 preOut 就是上一时钟的输出，out = preOut 就是把当前时钟的输出赋值给 preOut。
  */
 
 CHIP Bit {
