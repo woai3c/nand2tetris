@@ -58,7 +58,10 @@ class Screen {
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
         var int address, mask;
-
+        
+        // RAM[16394 + 1 * 32 + 1 / 16]，由于屏幕由 512 行，256 列像素组成
+        // 所以在纵向上有 512 / 16 = 32 字，在横向上有 256 / 16 = 16 字
+        // 为了提升效率，hack 采用按字进行逻辑运算来改变颜色
         let address = (y * 32) + (x / 16);
         let mask = bitArray[x & 15];
 
