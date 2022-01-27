@@ -72,7 +72,7 @@ function createJudgementString(judge, index) {
             + 'D;' + judge + '\r\n' // 否则接着往下处理
             + '@SP\r\n'
             + 'AM=M-1\r\n'
-            + 'M=0\r\n'
+            + 'M=0\r\n' // 没跳转，说明结果为 false(0，即二进制全为 0)
             + '@SP\r\n'
             + 'M=M+1\r\n'
             + '@CONTINUE' + index + '\r\n'
@@ -80,7 +80,7 @@ function createJudgementString(judge, index) {
             + '(TRUE' + index + ')\r\n'
             + '@SP\r\n'
             + 'AM=M-1\r\n'
-            + 'M=-1\r\n'
+            + 'M=-1\r\n' // 已跳转，说明结果为 true(-1，即二进制全为 1)
             + '@SP\r\n'
             + 'M=M+1\r\n'
             + '(CONTINUE' + index + ')\r\n'
