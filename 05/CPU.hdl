@@ -36,7 +36,7 @@ CHIP CPU {
     PARTS:
     // 指令的最大地址位 如果为1则是C指令 为0则是A指令
     Not(in = instruction[15], out = isA);
-    // 对isC再次取返 判断是否C指令 读者可以自行用1或0代入想像一下 isC实际上就是instruction[15]的值
+    // 对isA再次取反 判断是否C指令 读者可以自行用1或0代入想像一下 isC实际上就是instruction[15]的值
     Not(in = isA, out = isC);
 
     // 如果是C指令并且指令指定ALU输出存到AR 则将ALU的输出 输入到AR 否则将指令输入到AR
