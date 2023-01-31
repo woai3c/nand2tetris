@@ -20,6 +20,11 @@
 
 但这本书不一样，它是**手把手教你一步一步的实现一个编译器**。
 
+## 其他语言版本答案
+本书的第 6 - 11 章实验需要使用高级语言来实现，本仓库使用的是 JavaScript 语言。但仍然有许多开发者，他们熟悉的语言不是 JavaScript。因此，我添加了一些用其他语言实现的版本链接，方便大家学习。
+* [Java](https://github.com/AllenWrong/nand2tetris)
+* [C++](https://github.com/FusionBolt/The-Elements-of-Computer-Systems-Project)
+
 ## 配套资料
 * [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
 * [本书作者制作的教学视频课程](https://www.coursera.org/learn/build-a-computer/home/welcome)
