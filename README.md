@@ -24,6 +24,7 @@
 本书的第 6 - 11 章实验需要使用高级语言来实现，本仓库使用的是 JavaScript 语言。但仍然有许多开发者，他们熟悉的语言不是 JavaScript。因此，我添加了一些用其他语言实现的版本链接，方便大家学习。
 * [Java](https://github.com/AllenWrong/nand2tetris)
 * [C++](https://github.com/FusionBolt/The-Elements-of-Computer-Systems-Project)
+* [Python](https://github.com/xrahoo/nand2tetris-python)
 
 ## 配套资料
 * [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
