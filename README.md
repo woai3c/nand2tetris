@@ -30,7 +30,7 @@
 * [全套工具下载](https://github.com/woai3c/teocs-exercises/blob/master/nand2tetris.zip)
 * [本书作者制作的教学视频课程](https://www.coursera.org/learn/build-a-computer/home/welcome)
 * [官网](https://www.nand2tetris.org/)
-* [官方论坛](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
+* [官方论坛--已无法访问](http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/)
 
 书籍请加 QQ 群 **39014053**，在群文件里下载。
 ### 注意
