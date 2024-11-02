@@ -34,9 +34,12 @@
 
 书籍请加 QQ 群 **39014053**，在群文件里下载。
 ### 注意
-我上传的只有答案，测试用例和工具已经压缩放在仓库里，名字是**nand2tetris.zip**，下载源码后请自行解压。
+我上传的只有答案，测试用例和工具已经压缩放在仓库里，名字是 **nand2tetris.zip**，下载源码后请自行解压。
 
 有问题欢迎提 [issues](https://github.com/woai3c/nand2tetris/issues)，也可以选择加入 QQ 交流群 **39014053**，有问题随时提问。
+
+## 问题
+* [windows 下无法打开 `.bat` 文件](https://github.com/woai3c/nand2tetris/tree/master/09)
 
 ## 内容简介
 在完成所有项目后，可以跑一下软件提供的测试用例，感受一下计算机的奇妙之处：
@@ -46,9 +49,6 @@
 ![](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e5820185fae84ac389f457d5df08f2c8~tplv-k3u1fbpfcp-zoom-1.image)
 
 ![](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ae42f59db6714190a9a2b8c13741d0c2~tplv-k3u1fbpfcp-zoom-1.image)
-
-## 问题
-* [windows 下无法打开 `.bat` 文件](https://github.com/woai3c/nand2tetris/tree/master/09)
 
 ## 硬件平台
 
