@@ -38,7 +38,11 @@
 * [本书作者制作的教学视频课程](https://www.coursera.org/learn/build-a-computer/home/welcome)
 * [官网](https://www.nand2tetris.org/)
 
-书籍请加 QQ 群 **39014053**，在群文件里下载。
+书籍请加 QQ 群，在群文件里下载。
+* 1 群 39014053
+* 2 群 940079099
+
+
 ### 注意
 我上传的只有答案，测试用例和工具已经压缩放在仓库里，名字是 **nand2tetris.zip**，下载源码后请自行解压。
 
